@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Výsledky{% endblock %}
+{% block content %}
+<h1>✅ Výsledky
+    {% if typ == 'audit' %}— Energetický audit
+    {% elif typ == 'certifikat' %}— Energetický certifikát
+    {% else %}— Kontrola vykurovania{% endif %}
+</h1>
+
+<div class="card">
+    <div class="section-title">Identifikácia</div>
+    <div class="grid-2">
+        <p><strong>Budova:</strong> {{ data.get('nazov_budovy', '—') }}</p>
+        <p><strong>Vlastník:</strong> {{ data.get('vlastnik', '—') }}</p>
+    </div>
+    <p style="margin-top:0.5rem;"><strong>Adresa:</strong> {{ data.get('adresa', '—') }}</p>
+</div>
+
+<div class="card">
+    <div class="section-title">Výsledky výpočtu</div>
+    {% for k, v in vysledky.items() %}
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:0.7rem 0;border-bottom:1px solid #e8f4ec;">
+        <span style="font-weight:600;color:#4a6a4a;">{{ k.replace('_', ' ').capitalize() }}</span>
+        <span style="font-size:1.1rem;font-weight:700;color:
+            {% if k == 'trieda' %}
+                {% if v in ['A0', 'A1'] %}#2c7a4b{% elif v == 'B' %}#4caf50{% elif v == 'C' %}#8bc34a{% elif v == 'D' %}#ffc107{% elif v == 'E' %}#ff9800{% else %}#f44336{% endif %}
+            {% elif k == 'stav' %}
+                {% if v == 'Vyhovujúci' %}#2c7a4b{% else %}#f44336{% endif %}
+            {% else %}#1a3a2a{% endif %}
+        ">{{ v }}</span>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="card">
+    <div class="section-title">Stiahnuť správu</div>
+    <p style="color:#7a9a7a;font-size:0.9rem;margin-bottom:1.5rem;">Správa bola uložená do histórie. Stiahnite ju vo formáte Word alebo PDF.</p>
+
+    <form method="POST" action="{{ url_for('stiahnut', format='word', typ=typ) }}" style="display:inline;">
+        {% for k, v in data.items() %}
+            <input type="hidden" name="{{ k }}" value="{{ v }}">
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">⬇ Stiahnuť Word (.docx)</button>
+    </form>
+
+    <form method="POST" action="{{ url_for('stiahnut', format='pdf', typ=typ) }}" style="display:inline;margin-left:1rem;">
+        {% for k, v in data.items() %}
+            <input type="hidden" name="{{ k }}" value="{{ v }}">
+        {% endfor %}
+        <button type="submit" class="btn btn-outline">⬇ Stiahnuť PDF</button>
+    </form>
+
+    <div style="margin-top:1.5rem;">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">← Späť na dashboard</a>
+        <a href="{{ url_for(typ) }}" class="btn btn-secondary" style="margin-left:0.5rem;">+ Nový záznam</a>
+    </div>
+</div>
+{% endblock %}

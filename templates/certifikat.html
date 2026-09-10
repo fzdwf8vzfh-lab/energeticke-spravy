@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %}Energetický certifikát{% endblock %}
+{% block content %}
+<h1>📋 Energetický certifikát</h1>
+<form method="POST">
+    <div class="card">
+        <div class="section-title">Identifikácia budovy</div>
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Názov budovy *</label>
+                <input type="text" name="nazov_budovy" required placeholder="napr. Rodinný dom Bratislava">
+            </div>
+            <div class="form-group">
+                <label>Vlastník</label>
+                <input type="text" name="vlastnik" placeholder="Meno vlastníka">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Adresa budovy *</label>
+            <input type="text" name="adresa" required placeholder="Ulica, č., mesto, PSČ">
+        </div>
+
+        <div class="section-title">Parametre budovy</div>
+        <div class="grid-3">
+            <div class="form-group">
+                <label>Podlahová plocha (m²) *</label>
+                <input type="number" name="plocha" required step="0.1" min="0" placeholder="napr. 180">
+            </div>
+            <div class="form-group">
+                <label>Obostavaný objem (m³)</label>
+                <input type="number" name="objem" step="0.1" min="0" placeholder="napr. 540">
+            </div>
+            <div class="form-group">
+                <label>Rok výstavby</label>
+                <input type="number" name="rok_vystavby" placeholder="napr. 2010" min="1800" max="2025">
+            </div>
+        </div>
+
+        <div class="section-title">Potreba energie</div>
+        <div class="grid-3">
+            <div class="form-group">
+                <label>Potreba tepla na vykurovanie (kWh/rok) *</label>
+                <input type="number" name="potreba_tepla" required step="0.1" min="0" placeholder="napr. 8500">
+            </div>
+            <div class="form-group">
+                <label>Potreba energie na chladenie (kWh/rok)</label>
+                <input type="number" name="potreba_chlad" step="0.1" min="0" placeholder="napr. 0" value="0">
+            </div>
+            <div class="form-group">
+                <label>Potreba energie na osvetlenie (kWh/rok)</label>
+                <input type="number" name="potreba_svietenie" step="0.1" min="0" placeholder="napr. 1200" value="0">
+            </div>
+        </div>
+
+        <div class="section-title">Systémy budovy</div>
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Zdroj vykurovania</label>
+                <select name="zdroj_vykurovania">
+                    <option value="">-- Vyberte --</option>
+                    <option>Zemný plyn - kondenzačný kotol</option>
+                    <option>Tepelné čerpadlo vzduch-voda</option>
+                    <option>Tepelné čerpadlo zem-voda</option>
+                    <option>Diaľkové teplo</option>
+                    <option>Elektrina - priamovýhrevné</option>
+                    <option>Biomasa - kotol</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Príprava teplej vody</label>
+                <select name="priprava_tuv">
+                    <option value="">-- Vyberte --</option>
+                    <option>Zásobníkový ohrievač - plyn</option>
+                    <option>Zásobníkový ohrievač - elektrina</option>
+                    <option>Prietokový ohrievač</option>
+                    <option>Tepelné čerpadlo</option>
+                    <option>Solárne kolektory</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="margin-top:1.5rem;display:flex;gap:1rem;">
+            <button type="submit" class="btn btn-primary">Vypočítať a uložiť →</button>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Zrušiť</a>
+        </div>
+    </div>
+</form>
+{% endblock %}

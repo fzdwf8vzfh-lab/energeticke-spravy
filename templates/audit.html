@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}Energetický audit{% endblock %}
+{% block content %}
+<h1>🔍 Energetický audit</h1>
+<form method="POST">
+    <div class="card">
+        <div class="section-title">Identifikácia budovy</div>
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Názov budovy *</label>
+                <input type="text" name="nazov_budovy" required placeholder="napr. Bytový dom Zvolen">
+            </div>
+            <div class="form-group">
+                <label>Vlastník</label>
+                <input type="text" name="vlastnik" placeholder="Meno vlastníka">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Adresa budovy *</label>
+            <input type="text" name="adresa" required placeholder="Ulica, č., mesto, PSČ">
+        </div>
+
+        <div class="section-title">Základné parametre</div>
+        <div class="grid-3">
+            <div class="form-group">
+                <label>Podlahová plocha (m²) *</label>
+                <input type="number" name="plocha" required step="0.1" min="0" placeholder="napr. 450">
+            </div>
+            <div class="form-group">
+                <label>Rok výstavby</label>
+                <input type="number" name="rok_vystavby" placeholder="napr. 1985" min="1800" max="2025">
+            </div>
+            <div class="form-group">
+                <label>Počet podlaží</label>
+                <input type="number" name="pocet_podlazi" placeholder="napr. 4" min="1">
+            </div>
+        </div>
+
+        <div class="section-title">Spotreba energie</div>
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Ročná spotreba tepla (kWh/rok) *</label>
+                <input type="number" name="spotreba_teplo" required step="0.1" min="0" placeholder="napr. 25000">
+            </div>
+            <div class="form-group">
+                <label>Ročná spotreba elektriny (kWh/rok) *</label>
+                <input type="number" name="spotreba_elektrina" required step="0.1" min="0" placeholder="napr. 7500">
+            </div>
+        </div>
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Zdroj vykurovania</label>
+                <select name="zdroj_vykurovania">
+                    <option value="">-- Vyberte --</option>
+                    <option>Zemný plyn</option>
+                    <option>Diaľkové teplo</option>
+                    <option>Elektrina</option>
+                    <option>Tuhé palivo</option>
+                    <option>Tepelné čerpadlo</option>
+                    <option>Biomasa</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Typ budovy</label>
+                <select name="typ_budovy">
+                    <option value="">-- Vyberte --</option>
+                    <option>Bytový dom</option>
+                    <option>Rodinný dom</option>
+                    <option>Administratívna budova</option>
+                    <option>Škola</option>
+                    <option>Zdravotnícke zariadenie</option>
+                    <option>Priemyselná budova</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="section-title">Obálka budovy</div>
+        <div class="grid-3">
+            <div class="form-group">
+                <label>U-hodnota stien (W/m²K)</label>
+                <input type="number" name="u_steny" step="0.01" min="0" placeholder="napr. 0.35">
+            </div>
+            <div class="form-group">
+                <label>U-hodnota strechy (W/m²K)</label>
+                <input type="number" name="u_strecha" step="0.01" min="0" placeholder="napr. 0.20">
+            </div>
+            <div class="form-group">
+                <label>U-hodnota okien (W/m²K)</label>
+                <input type="number" name="u_okna" step="0.01" min="0" placeholder="napr. 1.10">
+            </div>
+        </div>
+
+        <div style="margin-top:1.5rem;display:flex;gap:1rem;">
+            <button type="submit" class="btn btn-primary">Vypočítať a uložiť →</button>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Zrušiť</a>
+        </div>
+    </div>
+</form>
+{% endblock %}

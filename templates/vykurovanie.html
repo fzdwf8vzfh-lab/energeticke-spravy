@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}Kontrola vykurovacích systémov{% endblock %}
+{% block content %}
+<h1>🔥 Kontrola vykurovacích systémov</h1>
+<form method="POST">
+    <div class="card">
+        <div class="section-title">Identifikácia budovy</div>
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Názov budovy / zákazníka *</label>
+                <input type="text" name="nazov_budovy" required placeholder="napr. Kotolňa Zvolen">
+            </div>
+            <div class="form-group">
+                <label>Vlastník</label>
+                <input type="text" name="vlastnik" placeholder="Meno vlastníka">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Adresa *</label>
+            <input type="text" name="adresa" required placeholder="Ulica, č., mesto, PSČ">
+        </div>
+
+        <div class="section-title">Parametre kotla</div>
+        <div class="grid-3">
+            <div class="form-group">
+                <label>Typ kotla</label>
+                <select name="typ_kotla">
+                    <option value="">-- Vyberte --</option>
+                    <option>Kondenzačný kotol - plyn</option>
+                    <option>Štandardný kotol - plyn</option>
+                    <option>Nízkoteplotný kotol - plyn</option>
+                    <option>Kotol na tuhé palivo</option>
+                    <option>Kotol na biomasu</option>
+                    <option>Elektrický kotol</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Výkon kotla (kW) *</label>
+                <input type="number" name="vykon_kotla" required step="0.1" min="0" placeholder="napr. 24">
+            </div>
+            <div class="form-group">
+                <label>Vek kotla (roky) *</label>
+                <input type="number" name="vek_kotla" required min="0" max="50" placeholder="napr. 8">
+            </div>
+        </div>
+        <div class="grid-3">
+            <div class="form-group">
+                <label>Nameraná účinnosť (%) *</label>
+                <input type="number" name="ucinnost" required step="0.1" min="0" max="110" placeholder="napr. 85">
+            </div>
+            <div class="form-group">
+                <label>Teplota spalín (°C)</label>
+                <input type="number" name="teplota_spalin" step="0.1" placeholder="napr. 120">
+            </div>
+            <div class="form-group">
+                <label>Obsah CO₂ (%)</label>
+                <input type="number" name="co2" step="0.1" min="0" max="20" placeholder="napr. 8.5">
+            </div>
+        </div>
+
+        <div class="section-title">Vykurovacia sústava</div>
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Typ vykurovacej sústavy</label>
+                <select name="typ_sustavy">
+                    <option value="">-- Vyberte --</option>
+                    <option>Radiátorová sústava</option>
+                    <option>Podlahové vykurovanie</option>
+                    <option>Kombinovaná sústava</option>
+                    <option>Vzduchová sústava</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Posledný servis</label>
+                <input type="text" name="posledny_servis" placeholder="napr. 03/2023">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Poznámky a zistené závady</label>
+            <textarea name="poznamky" rows="3" style="width:100%;padding:0.7rem 1rem;border:1.5px solid #c8e0c8;border-radius:8px;font-size:0.95rem;font-family:inherit;" placeholder="Popíšte zistené závady, stav izolácie potrubí, stav expanznej nádoby..."></textarea>
+        </div>
+
+        <div style="margin-top:1.5rem;display:flex;gap:1rem;">
+            <button type="submit" class="btn btn-primary">Vyhodnotiť a uložiť →</button>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Zrušiť</a>
+        </div>
+    </div>
+</form>
+{% endblock %}

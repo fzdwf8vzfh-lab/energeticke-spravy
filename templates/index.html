@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Energetické správy</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f4; color: #1a2e1a; }
+
+        header {
+            background: linear-gradient(135deg, #1a3a2a 0%, #2c7a4b 100%);
+            color: #fff;
+            padding: 5rem 2rem;
+            text-align: center;
+        }
+        header h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+        header p { font-size: 1.1rem; opacity: 0.85; max-width: 600px; margin: 0 auto 2rem; }
+        .btn-hero {
+            padding: 0.9rem 2.5rem;
+            background: #fff;
+            color: #2c7a4b;
+            border-radius: 8px;
+            font-weight: 700;
+            text-decoration: none;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+        .btn-hero:hover { background: #e8f4ec; }
+
+        .services {
+            max-width: 900px;
+            margin: 4rem auto;
+            padding: 0 1.5rem;
+        }
+        .services h2 { text-align: center; color: #1a3a2a; margin-bottom: 2rem; font-size: 1.5rem; }
+        .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+            text-align: center;
+        }
+        .card .icon { font-size: 2.5rem; margin-bottom: 1rem; }
+        .card h3 { color: #1a3a2a; margin-bottom: 0.5rem; }
+        .card p { font-size: 0.9rem; color: #5a7a5a; }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: #7a9a7a;
+            font-size: 0.85rem;
+            border-top: 1px solid #e0eae0;
+            margin-top: 4rem;
+        }
+
+        @media (max-width: 600px) {
+            .cards { grid-template-columns: 1fr; }
+            header h1 { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>⚡ Energetické správy</h1>
+    <p>Profesionálne nástroje pre energetické audity, certifikáty a kontrolu vykurovacích systémov.</p>
+    <a href="{{ url_for('login') }}" class="btn-hero">Prihlásiť sa →</a>
+</header>
+
+<div class="services">
+    <h2>Naše služby</h2>
+    <div class="cards">
+        <div class="card">
+            <div class="icon">🔍</div>
+            <h3>Energetický audit</h3>
+            <p>Komplexné posúdenie energetickej hospodárnosti budovy s výpočtom mernej spotreby energie.</p>
+        </div>
+        <div class="card">
+            <div class="icon">📋</div>
+            <h3>Energetický certifikát</h3>
+            <p>Vydávanie energetických certifikátov podľa platnej legislatívy SR.</p>
+        </div>
+        <div class="card">
+            <div class="icon">🔥</div>
+            <h3>Kontrola vykurovania</h3>
+            <p>Odborná kontrola kotlov a vykurovacích systémov s hodnotením stavu a odporúčaniami.</p>
+        </div>
+    </div>
+</div>
+
+<footer>
+    &copy; {{ 2025 }} Energetické správy. Všetky práva vyhradené.
+</footer>
+</body>
+</html>
