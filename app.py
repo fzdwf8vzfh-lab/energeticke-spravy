@@ -389,6 +389,8 @@ def historia():
     conn.close()
     return render_template('historia.html', zaznamy=zaznamy)
 
-if __name__ == '__main__':
+with app.app_context():
     init_db()
+
+if __name__ == '__main__':
     app.run(debug=True)
