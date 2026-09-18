@@ -14,7 +14,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, Image as RLImage
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
 from reportlab.pdfbase import pdfmetrics
@@ -188,7 +188,7 @@ def vypocitaj_vykurovanie(data):
         for pref in ['k1', 'k2']:
             if not data.get(f'{pref}_menovity_vykon'):
                 continue
-            palivo = data.get(f'{pref}_typ_paliva') or 'Zemný plyn'
+            palivo = data.get('druh_paliva') or 'Zemný plyn'
             garantovana = _f(data, f'{pref}_garantovana_ucinnost')
 
             merania = []
@@ -198,18 +198,28 @@ def vypocitaj_vykurovanie(data):
                 o2 = _f(data, f'{pref}_o2_{bod}')
                 if t_spalin == 0 and t_vzduch == 0 and o2 == 0:
                     continue
-                qA = round(komin_strata(t_spalin, t_vzduch, o2, palivo), 2)
-                ucinnost_bod = round(100 - qA - STRATA_SALANIM, 2)
+                strata_citelnym_teplom = round(komin_strata(t_spalin, t_vzduch, o2, palivo), 3)
+                strata_salanim = _f(data, f'{pref}_strata_salanim_{bod}', STRATA_SALANIM)
+                strata_horlavinou = _f(data, f'{pref}_strata_horlavinou_{bod}', 0)
+                ucinnost_bod = round(100 - strata_citelnym_teplom - strata_salanim - strata_horlavinou, 2)
+                prebytok_vzduchu = round(21 / (21 - o2), 2) if 0 < o2 < 21 else 0
                 merania.append({
-                    'zatazenie': label, 't_spalin': t_spalin, 't_vzduch': t_vzduch,
-                    'o2': o2, 'komin_strata': qA, 'ucinnost': ucinnost_bod,
+                    'zatazenie': label, 't_spalin': t_spalin, 't_vzduch': t_vzduch, 'o2': o2,
+                    'co': data.get(f'{pref}_co_{bod}', ''), 'co2': data.get(f'{pref}_co2_{bod}', ''),
+                    'so2': data.get(f'{pref}_so2_{bod}', ''), 'no': data.get(f'{pref}_no_{bod}', ''),
+                    'no2': data.get(f'{pref}_no2_{bod}', ''),
+                    'prebytok_vzduchu': prebytok_vzduchu,
+                    'strata_salanim': strata_salanim, 'strata_horlavinou': strata_horlavinou,
+                    'strata_citelnym_teplom': strata_citelnym_teplom,
+                    'komin_strata': round(strata_citelnym_teplom, 2),
+                    'ucinnost': ucinnost_bod,
                 })
 
             if merania:
                 priemer = round(sum(m['ucinnost'] for m in merania) / len(merania), 2)
             else:
                 priemer = 0
-            stav = 'Vyhovuje' if priemer >= min_ucinnost else 'Nevyhovuje'
+            stav = 'vyhovuje' if priemer >= min_ucinnost else 'nevyhovuje'
 
             kotly.append({
                 'oznacenie': pref.upper(),
@@ -219,19 +229,20 @@ def vypocitaj_vykurovanie(data):
                 'rok_vyroby': data.get(f'{pref}_rok_vyroby', ''),
                 'prevadzkovy_stav': data.get(f'{pref}_prevadzkovy_stav') or 'v prevádzke',
                 'menovity_vykon': data.get(f'{pref}_menovity_vykon', ''),
+                'max_vykon_kondenzacny': data.get(f'{pref}_max_vykon_kondenzacny', ''),
                 'max_vykon': data.get(f'{pref}_max_vykon', ''),
                 'max_prikon': data.get(f'{pref}_max_prikon', ''),
                 'min_vykon': data.get(f'{pref}_min_vykon', ''),
                 'min_prikon': data.get(f'{pref}_min_prikon', ''),
                 'kondenzacny': data.get(f'{pref}_kondenzacny') or 'kondenzačný',
                 'oznacenie_ce': data.get(f'{pref}_oznacenie_ce', ''),
-                'typ_regulacie': data.get(f'{pref}_typ_regulacie', ''),
-                'sposob_odvodu_spalin': data.get(f'{pref}_sposob_odvodu_spalin', ''),
-                'sposob_privodu_vzduchu': data.get(f'{pref}_sposob_privodu_vzduchu', ''),
-                'teplonosne_medium': data.get(f'{pref}_teplonosne_medium') or 'Teplá voda',
-                'sposob_vyuzitia': data.get(f'{pref}_sposob_vyuzitia') or 'Ústredné vykurovanie a teplá voda',
+                'vyrobca_horaka': data.get(f'{pref}_vyrobca_horaka', '') or '-',
+                'typ_horaka': data.get(f'{pref}_typ_horaka', '') or '-',
+                'vyrobne_cislo_horaka': data.get(f'{pref}_vyrobne_cislo_horaka', '') or '-',
+                'rok_vyroby_horaka': data.get(f'{pref}_rok_vyroby_horaka', '') or '-',
+                'overenie_min': data.get(f'{pref}_overenie_min', ''),
+                'overenie_max': data.get(f'{pref}_overenie_max', ''),
                 'typ_paliva': palivo,
-                'sposob_davkovania': data.get(f'{pref}_sposob_davkovania') or 'automatické',
                 'merania': merania,
                 'priemerna_ucinnost': priemer,
                 'garantovana_ucinnost': garantovana,
@@ -246,16 +257,23 @@ def vypocitaj_vykurovanie(data):
             if not rok or odber == 0:
                 continue
             vyhrevnost = _f(data, f'rok{i}_vyhrevnost')
+            spalovacie_teplo = _f(data, f'rok{i}_spalovacie_teplo')
             vyrobene_teplo = _f(data, f'rok{i}_vyrobene_teplo')
             spotreba_vykurovanie = _f(data, f'rok{i}_spotreba_vykurovanie')
             spotreba_tuv = _f(data, f'rok{i}_spotreba_tuv')
             spotreba_vody_tuv = _f(data, f'rok{i}_spotreba_vody_tuv')
 
+            pomer_vyhrevnosti = round(vyhrevnost / spalovacie_teplo, 8) if spalovacie_teplo > 0 else 0
             teplo_v_palive = round(odber * vyhrevnost, 2)
             ucinnost_priama = round((vyrobene_teplo / teplo_v_palive) * 100, 2) if teplo_v_palive > 0 else 0
             merna_spotreba_tuv = round(spotreba_tuv / spotreba_vody_tuv, 2) if spotreba_vody_tuv > 0 else 0
             celkova_spotreba = spotreba_vykurovanie + spotreba_tuv
             podiel_tuv = round((spotreba_tuv / celkova_spotreba) * 100, 2) if celkova_spotreba > 0 else 0
+
+            # Spotreba paliva rozpočítaná na vykurovanie/TÚV podľa dosiahnutej účinnosti
+            ucinnost_podiel = ucinnost_priama / 100 if ucinnost_priama > 0 else 1
+            spotreba_paliva_vykurovanie = round(spotreba_vykurovanie / ucinnost_podiel, 2)
+            spotreba_paliva_tuv = round(spotreba_tuv / ucinnost_podiel, 2)
 
             # Posúdenie potrebného výkonu (STN 06 0210 — stupeň-deňová metóda)
             ti = _f(data, f'rok{i}_ti', 20)
@@ -266,16 +284,24 @@ def vypocitaj_vykurovanie(data):
                 potrebny_vykon = round(spotreba_vykurovanie * (ti - te) / (24 * d * (ti - tepr)), 2)
             else:
                 potrebny_vykon = 0
+            pomer_ti = round((ti - tepr) / (ti - te), 3) if (ti - te) != 0 else 0
 
             roky.append({
                 'rok': rok, 'odber_paliva': odber, 'vyhrevnost': vyhrevnost,
+                'spalovacie_teplo': spalovacie_teplo, 'pomer_vyhrevnosti': pomer_vyhrevnosti,
                 'teplo_v_palive': teplo_v_palive, 'vyrobene_teplo': vyrobene_teplo,
                 'ucinnost_priama': ucinnost_priama,
                 'spotreba_vykurovanie': spotreba_vykurovanie, 'spotreba_tuv': spotreba_tuv,
                 'merna_spotreba_tuv': merna_spotreba_tuv, 'podiel_tuv': podiel_tuv,
+                'spotreba_paliva_vykurovanie': spotreba_paliva_vykurovanie,
+                'spotreba_paliva_tuv': spotreba_paliva_tuv,
                 'ti': ti, 'te': te, 'tepr': tepr, 'pocet_dni': d,
+                'gj_rok': round(spotreba_vykurovanie * 3.6 / 1000, 3),
+                'pomer_ti': pomer_ti,
                 'potrebny_vykon': potrebny_vykon,
             })
+
+        priemerna_ucinnost_priama = round(sum(r['ucinnost_priama'] for r in roky) / len(roky), 2) if roky else 0
 
         instalovany_vykon = round(sum(_f(data, f'{p}_menovity_vykon') for p in ['k1', 'k2']), 2)
         posledny_potrebny_vykon = roky[-1]['potrebny_vykon'] if roky else 0
@@ -284,7 +310,7 @@ def vypocitaj_vykurovanie(data):
         # --- Celkové vyhodnotenie ---
         if kotly:
             priemerna_ucinnost = round(sum(k['priemerna_ucinnost'] for k in kotly) / len(kotly), 2)
-            celkovy_stav = 'Vyhovuje' if all(k['stav'] == 'Vyhovuje' for k in kotly) else 'Nevyhovuje'
+            celkovy_stav = 'vyhovuje' if all(k['stav'] == 'vyhovuje' for k in kotly) else 'nevyhovuje'
         else:
             priemerna_ucinnost = 0
             celkovy_stav = 'N/A'
@@ -305,6 +331,7 @@ def vypocitaj_vykurovanie(data):
             'priemerna_ucinnost': priemerna_ucinnost,
             'celkovy_stav': celkovy_stav,
             'roky': roky,
+            'priemerna_ucinnost_priama': priemerna_ucinnost_priama,
             'instalovany_vykon': instalovany_vykon,
             'potrebny_vykon': posledny_potrebny_vykon,
             'vykon_rezerva': vykon_rezerva,
@@ -314,9 +341,9 @@ def vypocitaj_vykurovanie(data):
     except Exception:
         return {
             'kotly': [], 'min_ucinnost': 96, 'priemerna_ucinnost': 0,
-            'celkovy_stav': 'N/A', 'roky': [], 'instalovany_vykon': 0,
-            'potrebny_vykon': 0, 'vykon_rezerva': 0, 'interval_kontroly': 4,
-            'nasledujuca_kontrola': '',
+            'celkovy_stav': 'N/A', 'roky': [], 'priemerna_ucinnost_priama': 0,
+            'instalovany_vykon': 0, 'potrebny_vykon': 0, 'vykon_rezerva': 0,
+            'interval_kontroly': 4, 'nasledujuca_kontrola': '',
         }
 
 # ============================================================
@@ -351,18 +378,18 @@ def _docx_section_heading(doc, text):
         run.font.color.rgb = RGBColor(0x1a, 0x1a, 0x1a)
 
 def _docx_kotly_identifikacia(doc, kotly):
-    header = ["Parameter"] + [f"Kotol {k['oznacenie']}" for k in kotly]
+    header = ["Označenie kotla"] + [k['oznacenie'] for k in kotly]
     riadky = [
-        ("Výrobca kotla", 'vyrobca'), ("Typ kotla", 'typ'),
+        ("Prevádzkový stav", 'prevadzkovy_stav'), ("Výrobca kotla", 'vyrobca'), ("Typ kotla", 'typ'),
         ("Výrobné číslo kotla", 'vyrobne_cislo'), ("Rok výroby kotla", 'rok_vyroby'),
-        ("Prevádzkový stav", 'prevadzkovy_stav'),
-        ("Menovitý výkon (kW)", 'menovity_vykon'), ("Maximálny výkon 80/60 °C (kW)", 'max_vykon'),
-        ("Maximálny príkon (kW)", 'max_prikon'), ("Minimálny výkon 80/60 °C (kW)", 'min_vykon'),
-        ("Minimálny príkon (kW)", 'min_prikon'), ("Kondenzačný/nekondenzačný", 'kondenzacny'),
-        ("Označenie CE", 'oznacenie_ce'), ("Druh paliva", 'typ_paliva'),
-        ("Spôsob dávkovania paliva", 'sposob_davkovania'), ("Typ výkonovej regulácie", 'typ_regulacie'),
-        ("Spôsob odvodu spalín", 'sposob_odvodu_spalin'), ("Spôsob prívodu vzduchu", 'sposob_privodu_vzduchu'),
-        ("Teplonosné médium", 'teplonosne_medium'), ("Spôsob využitia kotla", 'sposob_vyuzitia'),
+        ("Menovitý výkon", 'menovity_vykon'), ("Maximálny výkon 50/30°C (kondenzačný)", 'max_vykon_kondenzacny'),
+        ("Maximálny výkon 80/60 °C", 'max_vykon'),
+        ("Maximálny príkon", 'max_prikon'), ("Minimálny výkon 80/60 °C", 'min_vykon'),
+        ("Minimálny príkon", 'min_prikon'), ("Kondenzačný/nekondenzačný", 'kondenzacny'),
+        ("Označenie CE", 'oznacenie_ce'),
+        ("Výrobca horáka, ak je kotol vybavený horákom dodatočne", 'vyrobca_horaka'),
+        ("Typ horáka", 'typ_horaka'), ("Výrobné číslo horáka", 'vyrobne_cislo_horaka'),
+        ("Rok výroby horáka", 'rok_vyroby_horaka'),
     ]
     data_rows = []
     for label, key in riadky:
@@ -410,6 +437,14 @@ def generuj_word(typ, data, vysledky):
             r2 = p.add_run(str(data.get(key, '')))
             r2.font.name = 'Times New Roman'
         doc.add_paragraph("")
+
+        fotografia = data.get('fotografia_cesta')
+        if fotografia and os.path.isfile(fotografia):
+            doc.add_picture(fotografia, width=Inches(4))
+            pic_p = doc.paragraphs[-1]
+            pic_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            doc.add_paragraph("")
+
         for label, key in [
             ("Vypracoval", 'vypracoval_firma'), ("Kontakt", 'vypracoval_kontakt'),
             ("Dátum kontroly", 'datum_kontroly'), ("Poradové číslo", 'poradove_cislo'),
@@ -423,118 +458,252 @@ def generuj_word(typ, data, vysledky):
 
         doc.add_page_break()
 
+        # --- OBSAH ---
+        _docx_section_heading(doc, "Obsah")
+        for polozka in [
+            "1. Kontrola kotla",
+            "    1.1 Identifikačné údaje kontrolovaného kotla",
+            "    1.2 Identifikačné údaje ostatných zariadení na výrobu tepla",
+            "2. Vizuálna kontrola a zhodnotenie funkčnosti a údržby kotla",
+            "    2.1 Prevádzková dokumentácia kotlov a povinnosti z nej vyplývajúce",
+            "    2.2 Vizuálna kontrola a zhodnotenie kotla",
+            "    2.3 Zhodnotenie údržby a kontrola dokladov o údržbe a opravách",
+            "    2.4 Kontrola funkčnosti kotla",
+            "3. Rozšírená kontrola vykurovacieho systému",
+            "    3.1 Kontrola úplnosti a aktuálnosti dokumentácie vnútorných rozvodov tepla a teplej vody",
+            "    3.2 Prehliadka vnútorných rozvodov tepla a teplej vody",
+            "    3.3 Zhodnotenie údržby a kontrola dokladov o údržbe a opravách rozvodov tepla a teplej vody",
+            "    3.4 Porovnanie skutočného využívania budovy s projektovaným využívaním",
+            "    3.5 Porovnanie skutočného využívania rozvodov tepla s projektovaným využívaním",
+            "4. Meranie účinnosti kotla – komínová strata",
+            "5. Vyhodnotenie účinnosti výroby tepla priamou metódou",
+            "6. Posúdenie výkonu kotla vzhľadom na potrebu tepla v budove",
+            "7. Vyhodnotenie kontroly kotla a návrhy na opatrenia",
+            "8. Vyhodnotenie rozšírenej kontroly vykurovacieho systému a návrh opatrení",
+        ]:
+            po = doc.add_paragraph(polozka)
+            for run in po.runs:
+                run.font.name = 'Times New Roman'
+        doc.add_page_break()
+
         # --- 1. KONTROLA KOTLA ---
         _docx_section_heading(doc, "1. Kontrola kotla")
-        doc.add_paragraph("1.1 Identifikačné údaje kotla").runs[0].bold = True
+        doc.add_paragraph("Kontrola kotla bola vykonávaná podľa Vyhl. č. 422/2012 Z.z. §2 v nasledovnom členení:")
+        doc.add_paragraph("1.1 Identifikačné údaje kontrolovaného kotla").runs[0].bold = True
+        _docx_table(doc, ["", ""], [
+            ("Vlastník", data.get('vlastnik', '')), ("Adresa vlastníka", data.get('adresa_vlastnika', '')),
+            ("Adresa budovy, v ktorej je kotol umiestnený", data.get('adresa', '')),
+            ("Správca", data.get('spravca', '')), ("Prevádzkovateľ", data.get('prevadzkovatel', '')),
+            ("Typ paliva", data.get('typ_paliva_kategoria', '')), ("Druh paliva", data.get('druh_paliva', '')),
+            ("Spôsob dávkovania paliva", data.get('sposob_davkovania', '')),
+        ])
         if kotly:
             _docx_kotly_identifikacia(doc, kotly)
         else:
             doc.add_paragraph("Nebol zadaný žiadny kotol.")
+        _docx_table(doc, ["", ""], [
+            ("Typ výkonovej regulácie", data.get('typ_regulacie', '')),
+            ("Spôsob odvodu spalín", data.get('sposob_odvodu_spalin', '')),
+            ("Spôsob prívodu vzduchu", data.get('sposob_privodu_vzduchu', '')),
+            ("Teplonosné médium", data.get('teplonosne_medium', '')),
+            ("Spôsob využitia kotla", data.get('sposob_vyuzitia', '')),
+        ])
+
+        doc.add_paragraph("1.2 Identifikačné údaje ostatných zariadení na výrobu tepla").runs[0].bold = True
+        ma_oze = any(data.get(k) for k in ['oze_druh_energie', 'oze_druh_zariadenia', 'oze_vyrobca'])
+        doc.add_paragraph("V budove je inštalované zariadenie na využívanie OZE." if ma_oze else "V budove nie je inštalované zariadenie na využívanie OZE.")
+        if ma_oze:
+            _docx_table(doc, ["", ""], [
+                ("Druh využívanej energie", data.get('oze_druh_energie', '')),
+                ("Druh zariadenia", data.get('oze_druh_zariadenia', '')),
+                ("Výrobca", data.get('oze_vyrobca', '')),
+                ("Apertúrna plocha kolektora", data.get('oze_apertura', '')),
+                ("Počet kusov", data.get('oze_pocet_kusov', '')),
+                ("Celkový inštalovaný výkon", data.get('oze_celkovy_vykon', '')),
+            ])
+        ma_tc = any(data.get(k) for k in ['tc_vyrobca', 'tc_typ', 'tc_prevadzkovy_stav'])
+        if ma_tc:
+            doc.add_paragraph("Tepelné čerpadlo")
+            _docx_table(doc, ["", ""], [
+                ("Prevádzkový stav", data.get('tc_prevadzkovy_stav', '')), ("Výrobca", data.get('tc_vyrobca', '')),
+                ("Typ", data.get('tc_typ', '')), ("Menovitý výkon", data.get('tc_menovity_vykon', '')),
+                ("Menovitý príkon", data.get('tc_menovity_prikon', '')), ("COP", data.get('tc_cop', '')),
+            ])
+        if data.get('poznamky_zariadenia'):
+            doc.add_paragraph(f"Poznámky: {data.get('poznamky_zariadenia')}")
 
         # --- 2. VIZUÁLNA KONTROLA ---
         _docx_section_heading(doc, "2. Vizuálna kontrola a zhodnotenie funkčnosti a údržby kotla")
-        vizualna = [
-            ("Stav kotla", data.get('stav_kotla', '')), ("Únik paliva", data.get('unik_paliva', '')),
-            ("Únik teplonosnej látky", data.get('unik_teplonosnej_latky', '')),
-            ("Znečistenie spaľovacej komory / horákov", data.get('znecistenie', '')),
-            ("Funkčnosť armatúr", data.get('armatury', '')),
-            ("Kvalita teplonosnej látky", data.get('kvalita_vody', '')),
-            ("Meracie prístroje", data.get('meracie_pristroje', '')),
-            ("Čistota kotolne", data.get('cistota_kotolne', '')),
-            ("Doklady o údržbe a opravách", data.get('doklady_udrzba', '')),
-        ]
-        _docx_table(doc, ["Kontrolovaná položka", "Zistený stav"], vizualna)
+        doc.add_paragraph("2.1 Prevádzková dokumentácia kotlov a povinnosti z nej vyplývajúce").runs[0].bold = True
+        _docx_table(doc, ["Dokumentácia kotla", ""], [
+            ("Projektová dokumentácia kotla", data.get('dok_projektova', '')),
+            ("Prevádzkový predpis výr. kotla", data.get('dok_predpis', '')),
+            ("Dokumentácia prevádzky a údržby", data.get('dok_udrzba', '')),
+            ("Správa z predchádzajúcej kontroly", data.get('dok_predchadzajuca_sprava', '')),
+            ("Zaškolenie obsluhy", data.get('dok_zaskolenie', '')),
+            ("Odborné prehliadky a revízie", data.get('dok_revizie', '')),
+        ])
+        doc.add_paragraph("2.2 Vizuálna kontrola a zhodnotenie kotla").runs[0].bold = True
+        _docx_table(doc, ["", ""], [
+            ("Únik paliva", data.get('unik_paliva', '')), ("Únik teplonosnej látky", data.get('unik_teplonosnej_latky', '')),
+            ("Vonkajší stav kotla", data.get('vonkajsi_stav_kotla', '')),
+            ("Tepelná izolácia, oplechovanie, netesnosti spalinovodu", data.get('izolacia_oplechovanie', '')),
+            ("Znečistenie spaľovacej komory a teplovýmenných plôch", data.get('znecistenie', '')),
+            ("Znečistenie horákov", data.get('znecistenie_horakov', '')),
+            ("Funkčnosť armatúr a stav ostatných častí vyžadujúcich údržbu", data.get('armatury', '')),
+            ("Kvalita teplonosnej látky, čistota obehovej vody", data.get('kvalita_vody', '')),
+            ("Správnosť údajov meracích prístrojov", data.get('meracie_pristroje', '')),
+            ("Systém riadenia kotla", data.get('system_riadenia', '')),
+            ("Čistota a poriadok kotolne", data.get('cistota_kotolne', '')),
+        ])
+        doc.add_paragraph("2.3 Zhodnotenie údržby a kontrola dokladov o údržbe a opravách").runs[0].bold = True
+        _docx_table(doc, ["", ""], [
+            ("Zhodnotenie údržby a zjavných stôp po údržbárskych prácach", data.get('udrzba_stopy', '')),
+            ("Kontrola dokladov o údržbe a opravách", data.get('doklady_udrzba', '')),
+        ])
+        doc.add_paragraph("2.4 Kontrola funkčnosti kotla").runs[0].bold = True
+        funkcnost_rows = [("Skúška funkcie kotlov v prevádzke", data.get('funkcnost_skuska', ''))]
+        for k in kotly:
+            if k['overenie_min'] or k['overenie_max']:
+                funkcnost_rows.append((f"Overenie výkonu kotla {k['oznacenie']}",
+                                        f"min = {k['overenie_min']} m³/hod   max = {k['overenie_max']} m³/hod"))
+        funkcnost_rows.append(("Regulácia výkonu", data.get('regulacia_vykonu_text', '')))
+        _docx_table(doc, ["", ""], funkcnost_rows)
 
         # --- 3. ROZŠÍRENÁ KONTROLA ---
         _docx_section_heading(doc, "3. Rozšírená kontrola vykurovacieho systému")
-        rozsirena = [
+        doc.add_paragraph("Rozšírená kontrola vykurovacieho systému bola vykonávaná podľa Vyhl. č. 422/2012 Z.z. §3 v nasledovnom členení:")
+        doc.add_paragraph("3.1 Kontrola úplnosti a aktuálnosti dokumentácie vnútorných rozvodov tepla a teplej vody").runs[0].bold = True
+        _docx_table(doc, ["", ""], [
+            ("Úplnosť PD ÚK a TÚV", data.get('roz_pd_uk_tuv', '')), ("Úplnosť PD zmien a rekonštrukcie", data.get('roz_pd_zmien', '')),
+            ("Úplnosť prevádz. predpisov zariadení", data.get('roz_predpisy', '')), ("Úplnosť MPP", data.get('roz_mpp', '')),
+            ("Vedenie prevádzkového denníka", data.get('roz_dennik', '')), ("Správy o údržbe a opravách", data.get('roz_spravy_udrzba', '')),
+            ("Správa z predchádzajúcej kontroly", data.get('dok_predchadzajuca_sprava', '')),
+        ])
+        doc.add_paragraph("3.2 Prehliadka vnútorných rozvodov tepla a teplej vody").runs[0].bold = True
+        _docx_table(doc, ["", ""], [
+            ("Hlavné komponenty rozv. tepla, prvky merania a riadenia", data.get('roz_komponenty', '')),
+            ("Ovládacie prvky systému regulácie", data.get('roz_ovladacie_prvky', '')),
             ("Vykurovacie telesá", data.get('vykurovacie_telesa', '')),
             ("Tepelná izolácia rozvodov tepla", data.get('tepelna_izolacia_rozvodov', '')),
             ("Čistota obehovej vody", data.get('cistota_obehovej_vody', '')),
-            ("Stav rozvodov tepla a TÚV", data.get('stav_rozvodov', '')),
-            ("Zmena využívania od poslednej kontroly", data.get('zmena_vyuzivania', '')),
-        ]
-        _docx_table(doc, ["Kontrolovaná položka", "Zistený stav"], rozsirena)
+        ])
+        doc.add_paragraph("3.3 Zhodnotenie údržby a kontrola dokladov o údržbe a opravách rozvodov tepla a teplej vody").runs[0].bold = True
+        _docx_table(doc, ["", ""], [
+            ("Zhodnotenie údržby a zjavných stôp po údržbárskych prácach", data.get('roz_udrzba_stopy', '')),
+            ("Kontrola dokladov o údržbe a opravách", data.get('roz_udrzba_doklady', '')),
+        ])
+        doc.add_paragraph("3.4 Porovnanie skutočného využívania budovy s projektovaným využívaním").runs[0].bold = True
+        _docx_table(doc, ["", ""], [
+            ("Zhodnotenie skutočného využívania s projektovaným stavom využívania budovy", data.get('buduva_zhodnotenie', '')),
+            ("Využívanie budovy od poslednej kontroly", data.get('zmena_vyuzivania', '')),
+        ])
+        doc.add_paragraph("3.5 Porovnanie skutočného využívania rozvodov tepla s projektovaným využívaním").runs[0].bold = True
+        _docx_table(doc, ["", ""], [
+            ("Zhodnotenie skutočného využívania s projektovaným stavom využívania rozvodov tepla", data.get('rozvody_zhodnotenie', '')),
+            ("Využívanie rozvodov tepla od poslednej kontroly", data.get('rozvody_zmena', '')),
+        ])
 
         # --- 4. MERANIE ÚČINNOSTI KOTLA ---
-        _docx_section_heading(doc, "4. Meranie účinnosti kotla — komínová strata")
+        _docx_section_heading(doc, "4. Meranie účinnosti kotla – komínová strata")
+        doc.add_paragraph("Účinnosť kontrolovaného kotla bola zistená nepriamou metódou z analýzy spalín.")
+        if data.get('analyzator_typ') or data.get('analyzator_vc'):
+            doc.add_paragraph(f"Meranie bolo vykonané analyzátorom spalín typ {data.get('analyzator_typ', '')}, {data.get('analyzator_vc', '')}. Pri kontrole účinnosti bol spaľovaný {data.get('druh_paliva', '')}.")
         for k in kotly:
-            doc.add_paragraph(f"Kotol {k['oznacenie']} — {k['vyrobca']} {k['typ']}").runs[0].bold = True
+            doc.add_paragraph(f"Tabuľka: Namerané a vypočítané parametre – kotol {k['oznacenie']}").runs[0].bold = True
             if k['merania']:
-                header = ["Parameter"] + [m['zatazenie'] for m in k['merania']]
+                header = [""] + [m['zatazenie'] for m in k['merania']]
                 riadky = [
-                    ["Teplota spaľovacieho vzduchu (°C)"] + [m['t_vzduch'] for m in k['merania']],
-                    ["Teplota spalín (°C)"] + [m['t_spalin'] for m in k['merania']],
-                    ["Obsah O₂ v spalinách (%)"] + [m['o2'] for m in k['merania']],
-                    ["Komínová strata (%)"] + [m['komin_strata'] for m in k['merania']],
-                    ["Účinnosť kotla (%)"] + [m['ucinnost'] for m in k['merania']],
+                    ["Teplota spaľovacieho vzduchu °C"] + [m['t_vzduch'] for m in k['merania']],
+                    ["Teplota spalín °C"] + [m['t_spalin'] for m in k['merania']],
+                    ["Obsah O2 v spalinách %"] + [m['o2'] for m in k['merania']],
+                    ["Obsah CO v spalinách ppm"] + [m['co'] or '-' for m in k['merania']],
+                    ["Obsah CO2 v spalinách %"] + [m['co2'] or '-' for m in k['merania']],
+                    ["Obsah SO2 v spalinách ppm"] + [m['so2'] or '-' for m in k['merania']],
+                    ["Obsah NO v spalinách ppm"] + [m['no'] or '-' for m in k['merania']],
+                    ["Obsah NO2 v spalinách ppm"] + [m['no2'] or '-' for m in k['merania']],
+                    ["Prebytok vzduchu -"] + [m['prebytok_vzduchu'] for m in k['merania']],
+                    ["Strata kotla sálaním %"] + [m['strata_salanim'] for m in k['merania']],
+                    ["Strata horľavinou v spalinách %"] + [m['strata_horlavinou'] for m in k['merania']],
+                    ["Strata citeľným teplom spalín %"] + [m['strata_citelnym_teplom'] for m in k['merania']],
+                    ["Účinnosť kotla %"] + [m['ucinnost'] for m in k['merania']],
                 ]
                 _docx_table(doc, header, riadky)
             doc.add_paragraph(f"Priemerná účinnosť kotla: {k['priemerna_ucinnost']} %")
             if k['garantovana_ucinnost']:
-                doc.add_paragraph(f"Garantovaná účinnosť podľa výrobcu: {k['garantovana_ucinnost']} %")
-            doc.add_paragraph(f"Minimálna požadovaná účinnosť podľa Vyhl. č. 328/2005 Z.z.: {vysledky.get('min_ucinnost')} %")
+                doc.add_paragraph(f"Garantovaná účinnosť kotla podľa výrobcu ȠG = {k['garantovana_ucinnost']}%")
+            doc.add_paragraph(f"Minimálna požadovaná účinnosť kotla podľa Vyhl.č. 328/2005: ȠMIN = {vysledky.get('min_ucinnost')}%")
             p = doc.add_paragraph()
-            p.add_run(f"Vyhodnotenie: {k['stav']}").bold = True
+            p.add_run(f"Vyhodnotenie merania energetickej účinnosti: {k['stav']}").bold = True
             doc.add_paragraph("")
 
         # --- 5. PRIAMA METÓDA ---
         _docx_section_heading(doc, "5. Vyhodnotenie účinnosti výroby tepla priamou metódou")
+        doc.add_paragraph("Spotrebu paliva pri výrobe tepla za predchádzajúce kalendárne roky uvádzam v nasledujúcej tabuľke.")
         if roky:
-            header = ["Ukazovateľ"] + [str(r['rok']) for r in roky]
+            header = [""] + [str(r['rok']) for r in roky]
             riadky = [
+                ["Priemerné spaľovacie teplo objemové (kWh/jedn.)"] + [r['spalovacie_teplo'] or '-' for r in roky],
+                ["Priemerná výhrevnosť paliva (kWh/jedn.)"] + [r['vyhrevnost'] for r in roky],
                 ["Odber paliva"] + [r['odber_paliva'] for r in roky],
-                ["Výhrevnosť paliva (kWh/jedn.)"] + [r['vyhrevnost'] for r in roky],
+                ["Energia v palive / spotreba paliva (kWh)"] + [r['teplo_v_palive'] for r in roky],
+                ["Pomer výhrevnosti k spaľovaciemu teplu (-)"] + [r['pomer_vyhrevnosti'] or '-' for r in roky],
                 ["Teplo v palive (kWh)"] + [r['teplo_v_palive'] for r in roky],
                 ["Vyrobené teplo (kWh)"] + [r['vyrobene_teplo'] for r in roky],
-                ["Účinnosť výroby tepla priamou metódou (%)"] + [r['ucinnost_priama'] for r in roky],
+                ["Účinnosť výroby tepla (%)"] + [r['ucinnost_priama'] for r in roky],
                 ["Spotreba tepla na vykurovanie (kWh)"] + [r['spotreba_vykurovanie'] for r in roky],
-                ["Spotreba tepla na TÚV (kWh)"] + [r['spotreba_tuv'] for r in roky],
-                ["Merná spotreba tepla na TÚV (kWh/m³)"] + [r['merna_spotreba_tuv'] for r in roky],
-                ["Podiel TÚV z celkovej spotreby (%)"] + [r['podiel_tuv'] for r in roky],
+                ["Spotreba tepla na prípravu teplej vody (kWh)"] + [r['spotreba_tuv'] for r in roky],
+                ["Spotreba vody na prípravu teplej vody (m³)"] + [data.get(f"rok{i+1}_spotreba_vody_tuv", '') for i in range(len(roky))],
+                ["Dosiahnutá merná spotr. tepla na prípravu TV (kWh/m³)"] + [r['merna_spotreba_tuv'] for r in roky],
+                ["Podiel spotreby teplej vody z celkovej spotreby (%)"] + [r['podiel_tuv'] for r in roky],
+                ["Spotreba paliva na prípravu vykurovacej vody (kWh)"] + [r['spotreba_paliva_vykurovanie'] for r in roky],
+                ["Spotreba paliva na prípravu teplej vody (kWh)"] + [r['spotreba_paliva_tuv'] for r in roky],
             ]
             _docx_table(doc, header, riadky)
+            doc.add_paragraph(f"Priemerná účinnosť výroby tepla: {vysledky.get('priemerna_ucinnost_priama')} %")
         else:
             doc.add_paragraph("Neboli zadané ročné údaje o spotrebe paliva.")
 
         # --- 6. POSÚDENIE VÝKONU ---
         _docx_section_heading(doc, "6. Posúdenie výkonu kotla vzhľadom na potrebu tepla v budove")
+        doc.add_paragraph("Tabuľka: Zhodnotenie priemerného tepelného výkonu").runs[0].bold = True
         if roky:
-            header = ["Ukazovateľ"] + [str(r['rok']) for r in roky]
-            riadky = [
-                ["ti - te (°C)"] + [round(r['ti'] - r['te'], 1) for r in roky],
-                ["ti - tepr (°C)"] + [round(r['ti'] - r['tepr'], 1) for r in roky],
-                ["Počet vykurovacích dní"] + [r['pocet_dni'] for r in roky],
-                ["Potrebný tepelný výkon (kW)"] + [r['potrebny_vykon'] for r in roky],
-            ]
+            header = ["", "kWh/r", "GJ/r", "ti - tepr", "ti - te", "ti - tepr/ti - te", "kW"]
+            riadky = [[r['rok'], r['spotreba_vykurovanie'], r['gj_rok'], round(r['ti'] - r['tepr'], 1),
+                       round(r['ti'] - r['te'], 1), r['pomer_ti'], r['potrebny_vykon']] for r in roky]
             _docx_table(doc, header, riadky)
         doc.add_paragraph(f"Inštalovaný výkon kotlov v objekte spolu: {vysledky.get('instalovany_vykon')} kW")
-        doc.add_paragraph(f"Potreba tepelného výkonu v objekte (posledný rok): {vysledky.get('potrebny_vykon')} kW")
+        doc.add_paragraph(f"Potreba tepelného výkonu v objekte pre reálne podmienky: {vysledky.get('potrebny_vykon')} kW")
         rezerva = vysledky.get('vykon_rezerva', 0)
         if rezerva >= 0:
-            doc.add_paragraph(f"Inštalovaný výkon kotolne pokrýva potrebu tepelného výkonu s rezervou {rezerva} kW.")
+            doc.add_paragraph("Inštalovaný výkon kotolne pokrýva potrebu tepelného výkonu v objekte s dostatočnou rezervou.")
         else:
-            doc.add_paragraph(f"Inštalovaný výkon kotolne nepokrýva potrebu tepelného výkonu (chýba {abs(rezerva)} kW).")
+            doc.add_paragraph(f"Inštalovaný výkon kotolne nepokrýva potrebu tepelného výkonu v objekte (chýba {abs(rezerva)} kW).")
 
         # --- 7. VYHODNOTENIE KONTROLY KOTLA ---
         _docx_section_heading(doc, "7. Vyhodnotenie kontroly kotla a návrhy na opatrenia")
-        doc.add_paragraph(f"Minimálna požadovaná priemerná účinnosť podľa Vyhlášky č. 328/2005 Z.z.: {vysledky.get('min_ucinnost')} %")
-        for k in kotly:
-            doc.add_paragraph(f"Nameraná priemerná účinnosť kotla {k['oznacenie']}: {k['priemerna_ucinnost']} %")
+        doc.add_paragraph(f"A./ {data.get('navrh_a_text', '')}")
         p = doc.add_paragraph()
-        p.add_run(f"Kotly {'spĺňajú' if vysledky.get('celkovy_stav') == 'Vyhovuje' else 'nespĺňajú'} požiadavky Vyhlášky č. 328/2005 Z.z.").bold = True
+        p.add_run(f"B./ Kotol má mať v zmysle Vyhlášky č. 328/2005 Z.z. minimálnu priemernú účinnosť {vysledky.get('min_ucinnost')}%. Nameraná hodnota je:").bold = False
+        for k in kotly:
+            doc.add_paragraph(f"    {k['oznacenie']} = {k['priemerna_ucinnost']} %")
+        doc.add_paragraph(f"Priemerná účinnosť výroby tepla zistená nepriamou metódou: {vysledky.get('priemerna_ucinnost')} %")
+        doc.add_paragraph(f"Priemerná účinnosť výroby tepla zistená priamou metódou: {vysledky.get('priemerna_ucinnost_priama')} %")
+        p = doc.add_paragraph()
+        p.add_run(f"Kotly {'spĺňajú' if vysledky.get('celkovy_stav') == 'vyhovuje' else 'nespĺňajú'} požiadavky Vyhlášky č. 328/2005 Z.z.").bold = True
 
         # --- 8. VYHODNOTENIE ROZŠÍRENEJ KONTROLY ---
         _docx_section_heading(doc, "8. Vyhodnotenie rozšírenej kontroly vykurovacieho systému a návrh opatrení")
-        if data.get('navrh_opatreni'):
-            doc.add_paragraph(f"Pre zlepšenie prevádzkového stavu navrhujeme tieto opatrenia: {data.get('navrh_opatreni')}")
-        doc.add_paragraph(f"Nasledujúcu kontrolu v zmysle Zákona č. 314/2012 Z.z. je potrebné vykonať do: {vysledky.get('nasledujuca_kontrola')}")
+        doc.add_paragraph(f"C./ Rozšírenou kontrolou rozvodov vykurovania a teplej úžitkovej vody boli zistené tieto skutočnosti: {data.get('rozsirena_zistenia', '')}")
+        doc.add_paragraph(f"D./ Pre zlepšenie prevádzkového stavu navrhujeme tieto opatrenia: {data.get('navrh_opatreni', '') or '—'}")
+        doc.add_paragraph("Kontrola bola vykonaná podľa Zákona č. 314/2012 Z.z. § 3, v intervale podľa § 4, príloha č.1 o pravidelnej kontrole kotlov, vykurovacieho systému a klimatizačného systému, v rozsahu podľa Vyhlášky č. 422/2012 Z.z., ktorou sa ustanovuje postup pri pravidelnej kontrole vykurovacieho systému, rozšírenej kontrole vykurovacieho systému a pri pravidelnej kontrole klimatizačného systému.")
+        doc.add_paragraph(f"Nasledujúcu kontrolu v zmysle Zákona č. 314/2012, príloha č. 1 je potrebné vykonať do: {vysledky.get('nasledujuca_kontrola')}")
         doc.add_paragraph("")
-        doc.add_paragraph("Vlastník, prevádzkovateľ: .....................................")
-        doc.add_paragraph("Oprávnená osoba: .....................................")
-        doc.add_paragraph(f"Dňa: {data.get('datum_kontroly', '.....................................')}")
+        doc.add_paragraph("Vlastník, prevádzkovateľ : .....................................")
+        doc.add_paragraph("Oprávnená osoba : .....................................")
+        doc.add_paragraph(f"Dňa : {data.get('datum_kontroly', '.....................................')}")
         doc.add_paragraph("")
-        doc.add_paragraph(f"Vypracoval: {data.get('vypracoval_firma', '')}")
+        doc.add_paragraph(f"Vypracoval : {data.get('vypracoval_firma', '')}")
 
         section = doc.sections[0]
         footer = section.footer
@@ -634,6 +803,17 @@ def generuj_pdf(typ, data, vysledky):
         ]:
             story.append(Paragraph(f"<b>{label}:</b> {data.get(key, '')}", normal))
         story.append(Spacer(1, 0.6*cm))
+
+        fotografia = data.get('fotografia_cesta')
+        if fotografia and os.path.isfile(fotografia):
+            try:
+                img = RLImage(fotografia, width=9*cm, height=6.5*cm, kind='proportional')
+                img.hAlign = 'CENTER'
+                story.append(img)
+                story.append(Spacer(1, 0.6*cm))
+            except Exception:
+                pass
+
         for label, key in [
             ("Vypracoval", 'vypracoval_firma'), ("Kontakt", 'vypracoval_kontakt'),
             ("Dátum kontroly", 'datum_kontroly'), ("Poradové číslo", 'poradove_cislo'),
@@ -641,26 +821,59 @@ def generuj_pdf(typ, data, vysledky):
             story.append(Paragraph(f"<b>{label}:</b> {data.get(key, '')}", normal))
         story.append(PageBreak())
 
+        # --- OBSAH ---
+        story.append(Paragraph("Obsah", h1))
+        for polozka in [
+            "1. Kontrola kotla",
+            "&nbsp;&nbsp;&nbsp;&nbsp;1.1 Identifikačné údaje kontrolovaného kotla",
+            "&nbsp;&nbsp;&nbsp;&nbsp;1.2 Identifikačné údaje ostatných zariadení na výrobu tepla",
+            "2. Vizuálna kontrola a zhodnotenie funkčnosti a údržby kotla",
+            "&nbsp;&nbsp;&nbsp;&nbsp;2.1 Prevádzková dokumentácia kotlov a povinnosti z nej vyplývajúce",
+            "&nbsp;&nbsp;&nbsp;&nbsp;2.2 Vizuálna kontrola a zhodnotenie kotla",
+            "&nbsp;&nbsp;&nbsp;&nbsp;2.3 Zhodnotenie údržby a kontrola dokladov o údržbe a opravách",
+            "&nbsp;&nbsp;&nbsp;&nbsp;2.4 Kontrola funkčnosti kotla",
+            "3. Rozšírená kontrola vykurovacieho systému",
+            "&nbsp;&nbsp;&nbsp;&nbsp;3.1 Kontrola úplnosti a aktuálnosti dokumentácie vnútorných rozvodov tepla a teplej vody",
+            "&nbsp;&nbsp;&nbsp;&nbsp;3.2 Prehliadka vnútorných rozvodov tepla a teplej vody",
+            "&nbsp;&nbsp;&nbsp;&nbsp;3.3 Zhodnotenie údržby a kontrola dokladov o údržbe a opravách rozvodov tepla a teplej vody",
+            "&nbsp;&nbsp;&nbsp;&nbsp;3.4 Porovnanie skutočného využívania budovy s projektovaným využívaním",
+            "&nbsp;&nbsp;&nbsp;&nbsp;3.5 Porovnanie skutočného využívania rozvodov tepla s projektovaným využívaním",
+            "4. Meranie účinnosti kotla – komínová strata",
+            "5. Vyhodnotenie účinnosti výroby tepla priamou metódou",
+            "6. Posúdenie výkonu kotla vzhľadom na potrebu tepla v budove",
+            "7. Vyhodnotenie kontroly kotla a návrhy na opatrenia",
+            "8. Vyhodnotenie rozšírenej kontroly vykurovacieho systému a návrh opatrení",
+        ]:
+            story.append(Paragraph(polozka, normal))
+        story.append(PageBreak())
+
         kotly = vysledky.get('kotly', [])
         roky = vysledky.get('roky', [])
 
         # --- 1. KONTROLA KOTLA ---
         story.append(Paragraph("1. Kontrola kotla", h1))
-        story.append(Paragraph("1.1 Identifikačné údaje kotla", bold))
+        story.append(Paragraph("Kontrola kotla bola vykonávaná podľa Vyhl. č. 422/2012 Z.z. §2 v nasledovnom členení:", normal))
+        story.append(Paragraph("1.1 Identifikačné údaje kontrolovaného kotla", bold))
         story.append(Spacer(1, 0.2*cm))
+        story.append(_pdf_table([
+            ["Vlastník", data.get('vlastnik', '')], ["Adresa vlastníka", data.get('adresa_vlastnika', '')],
+            ["Adresa budovy, v ktorej je kotol umiestnený", data.get('adresa', '')],
+            ["Správca", data.get('spravca', '')], ["Prevádzkovateľ", data.get('prevadzkovatel', '')],
+            ["Typ paliva", data.get('typ_paliva_kategoria', '')], ["Druh paliva", data.get('druh_paliva', '')],
+            ["Spôsob dávkovania paliva", data.get('sposob_davkovania', '')],
+        ], col_widths=[8*cm, 9*cm], header=False))
+        story.append(Spacer(1, 0.3*cm))
         if kotly:
-            header_row = ["Parameter"] + [f"Kotol {k['oznacenie']}" for k in kotly]
+            header_row = [""] + [k['oznacenie'] for k in kotly]
             riadky = [
-                ("Výrobca kotla", 'vyrobca'), ("Typ kotla", 'typ'),
+                ("Prevádzkový stav", 'prevadzkovy_stav'), ("Výrobca kotla", 'vyrobca'), ("Typ kotla", 'typ'),
                 ("Výrobné číslo kotla", 'vyrobne_cislo'), ("Rok výroby kotla", 'rok_vyroby'),
-                ("Prevádzkový stav", 'prevadzkovy_stav'), ("Menovitý výkon (kW)", 'menovity_vykon'),
-                ("Maximálny výkon 80/60°C (kW)", 'max_vykon'), ("Maximálny príkon (kW)", 'max_prikon'),
-                ("Minimálny výkon 80/60°C (kW)", 'min_vykon'), ("Minimálny príkon (kW)", 'min_prikon'),
+                ("Menovitý výkon", 'menovity_vykon'), ("Max. výkon 50/30°C (kondenz.)", 'max_vykon_kondenzacny'),
+                ("Max. výkon 80/60°C", 'max_vykon'), ("Max. príkon", 'max_prikon'),
+                ("Min. výkon 80/60°C", 'min_vykon'), ("Min. príkon", 'min_prikon'),
                 ("Kondenzačný/nekondenzačný", 'kondenzacny'), ("Označenie CE", 'oznacenie_ce'),
-                ("Druh paliva", 'typ_paliva'), ("Spôsob dávkovania paliva", 'sposob_davkovania'),
-                ("Typ výkonovej regulácie", 'typ_regulacie'), ("Spôsob odvodu spalín", 'sposob_odvodu_spalin'),
-                ("Spôsob prívodu vzduchu", 'sposob_privodu_vzduchu'), ("Teplonosné médium", 'teplonosne_medium'),
-                ("Spôsob využitia kotla", 'sposob_vyuzitia'),
+                ("Výrobca horáka", 'vyrobca_horaka'), ("Typ horáka", 'typ_horaka'),
+                ("Výrobné číslo horáka", 'vyrobne_cislo_horaka'), ("Rok výroby horáka", 'rok_vyroby_horaka'),
             ]
             data_rows = [header_row] + [[label] + [str(k.get(key, '')) for k in kotly] for label, key in riadky]
             col0 = 5.5*cm
@@ -668,125 +881,234 @@ def generuj_pdf(typ, data, vysledky):
             story.append(_pdf_table(data_rows, col_widths=[col0] + [colN]*len(kotly)))
         else:
             story.append(Paragraph("Nebol zadaný žiadny kotol.", normal))
-        story.append(Spacer(1, 0.5*cm))
+        story.append(Spacer(1, 0.3*cm))
+        story.append(_pdf_table([
+            ["Typ výkonovej regulácie", data.get('typ_regulacie', '')],
+            ["Spôsob odvodu spalín", data.get('sposob_odvodu_spalin', '')],
+            ["Spôsob prívodu vzduchu", data.get('sposob_privodu_vzduchu', '')],
+            ["Teplonosné médium", data.get('teplonosne_medium', '')],
+            ["Spôsob využitia kotla", data.get('sposob_vyuzitia', '')],
+        ], col_widths=[8*cm, 9*cm], header=False))
+        story.append(Spacer(1, 0.4*cm))
+
+        story.append(Paragraph("1.2 Identifikačné údaje ostatných zariadení na výrobu tepla", bold))
+        ma_oze = any(data.get(k) for k in ['oze_druh_energie', 'oze_druh_zariadenia', 'oze_vyrobca'])
+        story.append(Paragraph("V budove je inštalované zariadenie na využívanie OZE." if ma_oze else "V budove nie je inštalované zariadenie na využívanie OZE.", normal))
+        if ma_oze:
+            story.append(_pdf_table([
+                ["Druh využívanej energie", data.get('oze_druh_energie', '')],
+                ["Druh zariadenia", data.get('oze_druh_zariadenia', '')], ["Výrobca", data.get('oze_vyrobca', '')],
+                ["Apertúrna plocha kolektora", data.get('oze_apertura', '')], ["Počet kusov", data.get('oze_pocet_kusov', '')],
+                ["Celkový inštalovaný výkon", data.get('oze_celkovy_vykon', '')],
+            ], col_widths=[8*cm, 9*cm], header=False))
+        ma_tc = any(data.get(k) for k in ['tc_vyrobca', 'tc_typ', 'tc_prevadzkovy_stav'])
+        if ma_tc:
+            story.append(Paragraph("Tepelné čerpadlo", normal))
+            story.append(_pdf_table([
+                ["Prevádzkový stav", data.get('tc_prevadzkovy_stav', '')], ["Výrobca", data.get('tc_vyrobca', '')],
+                ["Typ", data.get('tc_typ', '')], ["Menovitý výkon", data.get('tc_menovity_vykon', '')],
+                ["Menovitý príkon", data.get('tc_menovity_prikon', '')], ["COP", data.get('tc_cop', '')],
+            ], col_widths=[8*cm, 9*cm], header=False))
+        if data.get('poznamky_zariadenia'):
+            story.append(Paragraph(f"Poznámky: {data.get('poznamky_zariadenia')}", normal))
+        story.append(PageBreak())
 
         # --- 2. VIZUÁLNA KONTROLA ---
         story.append(Paragraph("2. Vizuálna kontrola a zhodnotenie funkčnosti a údržby kotla", h1))
-        vizualna = [["Kontrolovaná položka", "Zistený stav"]] + [
+        story.append(Paragraph("2.1 Prevádzková dokumentácia kotlov a povinnosti z nej vyplývajúce", bold))
+        story.append(_pdf_table([["Dokumentácia kotla", ""]] + [
             [label, data.get(key, '') or '—'] for label, key in [
-                ("Stav kotla", 'stav_kotla'), ("Únik paliva", 'unik_paliva'),
-                ("Únik teplonosnej látky", 'unik_teplonosnej_latky'),
-                ("Znečistenie spaľovacej komory / horákov", 'znecistenie'),
-                ("Funkčnosť armatúr", 'armatury'), ("Kvalita teplonosnej látky", 'kvalita_vody'),
-                ("Meracie prístroje", 'meracie_pristroje'), ("Čistota kotolne", 'cistota_kotolne'),
-                ("Doklady o údržbe a opravách", 'doklady_udrzba'),
+                ("Projektová dokumentácia kotla", 'dok_projektova'), ("Prevádzkový predpis výr. kotla", 'dok_predpis'),
+                ("Dokumentácia prevádzky a údržby", 'dok_udrzba'), ("Správa z predchádzajúcej kontroly", 'dok_predchadzajuca_sprava'),
+                ("Zaškolenie obsluhy", 'dok_zaskolenie'), ("Odborné prehliadky a revízie", 'dok_revizie'),
             ]
-        ]
-        story.append(_pdf_table(vizualna, col_widths=[9*cm, 8*cm]))
-        story.append(Spacer(1, 0.5*cm))
+        ], col_widths=[9*cm, 8*cm]))
+        story.append(Spacer(1, 0.4*cm))
+        story.append(Paragraph("2.2 Vizuálna kontrola a zhodnotenie kotla", bold))
+        story.append(_pdf_table([["", ""]] + [
+            [label, data.get(key, '') or '—'] for label, key in [
+                ("Únik paliva", 'unik_paliva'), ("Únik teplonosnej látky", 'unik_teplonosnej_latky'),
+                ("Vonkajší stav kotla", 'vonkajsi_stav_kotla'),
+                ("Tepelná izolácia, oplechovanie, netesnosti spalinovodu", 'izolacia_oplechovanie'),
+                ("Znečistenie spaľovacej komory a teplovýmenných plôch", 'znecistenie'),
+                ("Znečistenie horákov", 'znecistenie_horakov'),
+                ("Funkčnosť armatúr a ostatných častí", 'armatury'),
+                ("Kvalita teplonosnej látky, čistota obehovej vody", 'kvalita_vody'),
+                ("Správnosť údajov meracích prístrojov", 'meracie_pristroje'),
+                ("Systém riadenia kotla", 'system_riadenia'), ("Čistota a poriadok kotolne", 'cistota_kotolne'),
+            ]
+        ], col_widths=[9*cm, 8*cm]))
+        story.append(PageBreak())
+
+        story.append(Paragraph("2.3 Zhodnotenie údržby a kontrola dokladov o údržbe a opravách", bold))
+        story.append(_pdf_table([["", ""]] + [
+            [label, data.get(key, '') or '—'] for label, key in [
+                ("Zjavné stopy po údržbárskych prácach", 'udrzba_stopy'), ("Doklady o údržbe a opravách", 'doklady_udrzba'),
+            ]
+        ], col_widths=[9*cm, 8*cm]))
+        story.append(Spacer(1, 0.4*cm))
+        story.append(Paragraph("2.4 Kontrola funkčnosti kotla", bold))
+        funkcnost_rows = [["", ""], ["Skúška funkcie kotlov v prevádzke", data.get('funkcnost_skuska', '') or '—']]
+        for k in kotly:
+            if k['overenie_min'] or k['overenie_max']:
+                funkcnost_rows.append([f"Overenie výkonu kotla {k['oznacenie']}", f"min = {k['overenie_min']} m³/hod   max = {k['overenie_max']} m³/hod"])
+        funkcnost_rows.append(["Regulácia výkonu", data.get('regulacia_vykonu_text', '') or '—'])
+        story.append(_pdf_table(funkcnost_rows, col_widths=[9*cm, 8*cm]))
+        story.append(Spacer(1, 0.4*cm))
 
         # --- 3. ROZŠÍRENÁ KONTROLA ---
         story.append(Paragraph("3. Rozšírená kontrola vykurovacieho systému", h1))
-        rozsirena = [["Kontrolovaná položka", "Zistený stav"]] + [
+        story.append(Paragraph("Rozšírená kontrola vykurovacieho systému bola vykonávaná podľa Vyhl. č. 422/2012 Z.z. §3 v nasledovnom členení:", normal))
+        story.append(Paragraph("3.1 Kontrola úplnosti a aktuálnosti dokumentácie vnútorných rozvodov tepla a teplej vody", bold))
+        story.append(_pdf_table([["", ""]] + [
             [label, data.get(key, '') or '—'] for label, key in [
-                ("Vykurovacie telesá", 'vykurovacie_telesa'),
-                ("Tepelná izolácia rozvodov tepla", 'tepelna_izolacia_rozvodov'),
-                ("Čistota obehovej vody", 'cistota_obehovej_vody'),
-                ("Stav rozvodov tepla a TÚV", 'stav_rozvodov'),
-                ("Zmena využívania od poslednej kontroly", 'zmena_vyuzivania'),
+                ("Úplnosť PD ÚK a TÚV", 'roz_pd_uk_tuv'), ("Úplnosť PD zmien a rekonštrukcie", 'roz_pd_zmien'),
+                ("Úplnosť prevádz. predpisov zariadení", 'roz_predpisy'), ("Úplnosť MPP", 'roz_mpp'),
+                ("Vedenie prevádzkového denníka", 'roz_dennik'), ("Správy o údržbe a opravách", 'roz_spravy_udrzba'),
+                ("Správa z predchádzajúcej kontroly", 'dok_predchadzajuca_sprava'),
             ]
-        ]
-        story.append(_pdf_table(rozsirena, col_widths=[9*cm, 8*cm]))
+        ], col_widths=[9*cm, 8*cm]))
+        story.append(PageBreak())
+
+        story.append(Paragraph("3.2 Prehliadka vnútorných rozvodov tepla a teplej vody", bold))
+        story.append(_pdf_table([["", ""]] + [
+            [label, data.get(key, '') or '—'] for label, key in [
+                ("Hlavné komponenty rozv. tepla, prvky merania a riadenia", 'roz_komponenty'),
+                ("Ovládacie prvky systému regulácie", 'roz_ovladacie_prvky'),
+                ("Vykurovacie telesá", 'vykurovacie_telesa'), ("Tepelná izolácia rozvodov tepla", 'tepelna_izolacia_rozvodov'),
+                ("Čistota obehovej vody", 'cistota_obehovej_vody'),
+            ]
+        ], col_widths=[9*cm, 8*cm]))
+        story.append(Spacer(1, 0.4*cm))
+        story.append(Paragraph("3.3 Zhodnotenie údržby a kontrola dokladov o údržbe a opravách rozvodov tepla a teplej vody", bold))
+        story.append(_pdf_table([["", ""]] + [
+            [label, data.get(key, '') or '—'] for label, key in [
+                ("Zjavné stopy po údržbárskych prácach", 'roz_udrzba_stopy'), ("Doklady o údržbe a opravách", 'roz_udrzba_doklady'),
+            ]
+        ], col_widths=[9*cm, 8*cm]))
+        story.append(Spacer(1, 0.4*cm))
+        story.append(Paragraph("3.4 Porovnanie skutočného využívania budovy s projektovaným využívaním", bold))
+        story.append(_pdf_table([["", ""]] + [
+            [label, data.get(key, '') or '—'] for label, key in [
+                ("Zhodnotenie skutočného využívania s projektovaným stavom využívania budovy", 'buduva_zhodnotenie'),
+                ("Využívanie budovy od poslednej kontroly", 'zmena_vyuzivania'),
+            ]
+        ], col_widths=[9*cm, 8*cm]))
+        story.append(Spacer(1, 0.4*cm))
+        story.append(Paragraph("3.5 Porovnanie skutočného využívania rozvodov tepla s projektovaným využívaním", bold))
+        story.append(_pdf_table([["", ""]] + [
+            [label, data.get(key, '') or '—'] for label, key in [
+                ("Zhodnotenie skutočného využívania s projektovaným stavom využívania rozvodov tepla", 'rozvody_zhodnotenie'),
+                ("Využívanie rozvodov tepla od poslednej kontroly", 'rozvody_zmena'),
+            ]
+        ], col_widths=[9*cm, 8*cm]))
         story.append(PageBreak())
 
         # --- 4. MERANIE ÚČINNOSTI KOTLA ---
-        story.append(Paragraph("4. Meranie účinnosti kotla — komínová strata", h1))
+        story.append(Paragraph("4. Meranie účinnosti kotla – komínová strata", h1))
+        story.append(Paragraph("Účinnosť kontrolovaného kotla bola zistená nepriamou metódou z analýzy spalín.", normal))
+        if data.get('analyzator_typ') or data.get('analyzator_vc'):
+            story.append(Paragraph(f"Meranie bolo vykonané analyzátorom spalín typ {data.get('analyzator_typ', '')}, {data.get('analyzator_vc', '')}. Pri kontrole účinnosti bol spaľovaný {data.get('druh_paliva', '')}.", normal))
         for k in kotly:
-            story.append(Paragraph(f"Kotol {k['oznacenie']} — {k['vyrobca']} {k['typ']}", bold))
+            story.append(Paragraph(f"Tabuľka: Namerané a vypočítané parametre – kotol {k['oznacenie']}", bold))
             story.append(Spacer(1, 0.15*cm))
             if k['merania']:
-                header_row = ["Parameter"] + [m['zatazenie'] for m in k['merania']]
+                header_row = [""] + [m['zatazenie'] for m in k['merania']]
                 riadky = [
-                    ["Teplota spaľovacieho vzduchu (°C)"] + [str(m['t_vzduch']) for m in k['merania']],
-                    ["Teplota spalín (°C)"] + [str(m['t_spalin']) for m in k['merania']],
-                    ["Obsah O₂ v spalinách (%)"] + [str(m['o2']) for m in k['merania']],
-                    ["Komínová strata (%)"] + [str(m['komin_strata']) for m in k['merania']],
-                    ["Účinnosť kotla (%)"] + [str(m['ucinnost']) for m in k['merania']],
+                    ["Teplota spaľovacieho vzduchu °C"] + [str(m['t_vzduch']) for m in k['merania']],
+                    ["Teplota spalín °C"] + [str(m['t_spalin']) for m in k['merania']],
+                    ["Obsah O2 v spalinách %"] + [str(m['o2']) for m in k['merania']],
+                    ["Obsah CO v spalinách ppm"] + [str(m['co'] or '-') for m in k['merania']],
+                    ["Obsah CO2 v spalinách %"] + [str(m['co2'] or '-') for m in k['merania']],
+                    ["Obsah SO2 v spalinách ppm"] + [str(m['so2'] or '-') for m in k['merania']],
+                    ["Obsah NO v spalinách ppm"] + [str(m['no'] or '-') for m in k['merania']],
+                    ["Obsah NO2 v spalinách ppm"] + [str(m['no2'] or '-') for m in k['merania']],
+                    ["Prebytok vzduchu -"] + [str(m['prebytok_vzduchu']) for m in k['merania']],
+                    ["Strata kotla sálaním %"] + [str(m['strata_salanim']) for m in k['merania']],
+                    ["Strata horľavinou v spalinách %"] + [str(m['strata_horlavinou']) for m in k['merania']],
+                    ["Strata citeľným teplom spalín %"] + [str(m['strata_citelnym_teplom']) for m in k['merania']],
+                    ["Účinnosť kotla %"] + [str(m['ucinnost']) for m in k['merania']],
                 ]
                 colN = (17*cm - 7*cm) / max(len(k['merania']), 1)
                 story.append(_pdf_table([header_row] + riadky, col_widths=[7*cm] + [colN]*len(k['merania'])))
             story.append(Paragraph(f"Priemerná účinnosť kotla: <b>{k['priemerna_ucinnost']} %</b>", normal))
             if k['garantovana_ucinnost']:
-                story.append(Paragraph(f"Garantovaná účinnosť podľa výrobcu: {k['garantovana_ucinnost']} %", normal))
-            story.append(Paragraph(f"Minimálna požadovaná účinnosť podľa Vyhl. č. 328/2005 Z.z.: {vysledky.get('min_ucinnost')} %", normal))
-            story.append(Paragraph(f"<b>Vyhodnotenie: {k['stav']}</b>", normal))
+                story.append(Paragraph(f"Garantovaná účinnosť kotla podľa výrobcu ȠG = {k['garantovana_ucinnost']}%", normal))
+            story.append(Paragraph(f"Minimálna požadovaná účinnosť kotla podľa Vyhl.č. 328/2005: ȠMIN = {vysledky.get('min_ucinnost')}%", normal))
+            story.append(Paragraph(f"<b>Vyhodnotenie merania energetickej účinnosti: {k['stav']}</b>", normal))
             story.append(Spacer(1, 0.4*cm))
+        story.append(PageBreak())
 
         # --- 5. PRIAMA METÓDA ---
         story.append(Paragraph("5. Vyhodnotenie účinnosti výroby tepla priamou metódou", h1))
+        story.append(Paragraph("Spotrebu paliva pri výrobe tepla za predchádzajúce kalendárne roky uvádzam v nasledujúcej tabuľke.", normal))
         if roky:
-            header_row = ["Ukazovateľ"] + [str(r['rok']) for r in roky]
+            header_row = [""] + [str(r['rok']) for r in roky]
             riadky = [
+                ["Priemerné spaľovacie teplo objemové (kWh/jedn.)"] + [str(r['spalovacie_teplo'] or '-') for r in roky],
+                ["Priemerná výhrevnosť paliva (kWh/jedn.)"] + [str(r['vyhrevnost']) for r in roky],
                 ["Odber paliva"] + [str(r['odber_paliva']) for r in roky],
-                ["Výhrevnosť paliva (kWh/jedn.)"] + [str(r['vyhrevnost']) for r in roky],
-                ["Teplo v palive (kWh)"] + [str(r['teplo_v_palive']) for r in roky],
+                ["Energia v palive (kWh)"] + [str(r['teplo_v_palive']) for r in roky],
+                ["Pomer výhrevnosti k spaľovaciemu teplu (-)"] + [str(r['pomer_vyhrevnosti'] or '-') for r in roky],
                 ["Vyrobené teplo (kWh)"] + [str(r['vyrobene_teplo']) for r in roky],
-                ["Účinnosť priamou metódou (%)"] + [str(r['ucinnost_priama']) for r in roky],
+                ["Účinnosť výroby tepla (%)"] + [str(r['ucinnost_priama']) for r in roky],
                 ["Spotreba tepla na vykurovanie (kWh)"] + [str(r['spotreba_vykurovanie']) for r in roky],
-                ["Spotreba tepla na TÚV (kWh)"] + [str(r['spotreba_tuv']) for r in roky],
-                ["Merná spotreba tepla na TÚV (kWh/m³)"] + [str(r['merna_spotreba_tuv']) for r in roky],
-                ["Podiel TÚV z celkovej spotreby (%)"] + [str(r['podiel_tuv']) for r in roky],
+                ["Spotreba tepla na prípravu TÚV (kWh)"] + [str(r['spotreba_tuv']) for r in roky],
+                ["Dosiahnutá merná spotr. tepla na TÚV (kWh/m³)"] + [str(r['merna_spotreba_tuv']) for r in roky],
+                ["Podiel spotreby TÚV z celkovej spotreby (%)"] + [str(r['podiel_tuv']) for r in roky],
+                ["Spotreba paliva na prípravu vykurovacej vody (kWh)"] + [str(r['spotreba_paliva_vykurovanie']) for r in roky],
+                ["Spotreba paliva na prípravu teplej vody (kWh)"] + [str(r['spotreba_paliva_tuv']) for r in roky],
             ]
-            col0 = 7*cm
+            col0 = 7.5*cm
             colN = (17*cm - col0) / len(roky)
             story.append(_pdf_table([header_row] + riadky, col_widths=[col0] + [colN]*len(roky)))
+            story.append(Paragraph(f"Priemerná účinnosť výroby tepla: <b>{vysledky.get('priemerna_ucinnost_priama')} %</b>", normal))
         else:
             story.append(Paragraph("Neboli zadané ročné údaje o spotrebe paliva.", normal))
-        story.append(Spacer(1, 0.5*cm))
+        story.append(PageBreak())
 
         # --- 6. POSÚDENIE VÝKONU ---
         story.append(Paragraph("6. Posúdenie výkonu kotla vzhľadom na potrebu tepla v budove", h1))
+        story.append(Paragraph("Tabuľka: Zhodnotenie priemerného tepelného výkonu", bold))
         if roky:
-            header_row = ["Ukazovateľ"] + [str(r['rok']) for r in roky]
-            riadky = [
-                ["ti - te (°C)"] + [str(round(r['ti'] - r['te'], 1)) for r in roky],
-                ["ti - tepr (°C)"] + [str(round(r['ti'] - r['tepr'], 1)) for r in roky],
-                ["Počet vykurovacích dní"] + [str(r['pocet_dni']) for r in roky],
-                ["Potrebný tepelný výkon (kW)"] + [str(r['potrebny_vykon']) for r in roky],
-            ]
-            col0 = 7*cm
-            colN = (17*cm - col0) / len(roky)
-            story.append(_pdf_table([header_row] + riadky, col_widths=[col0] + [colN]*len(roky)))
+            header_row = ["", "kWh/r", "GJ/r", "ti - tepr", "ti - te", "pomer", "kW"]
+            riadky = [[str(r['rok']), str(r['spotreba_vykurovanie']), str(r['gj_rok']), str(round(r['ti'] - r['tepr'], 1)),
+                       str(round(r['ti'] - r['te'], 1)), str(r['pomer_ti']), str(r['potrebny_vykon'])] for r in roky]
+            story.append(_pdf_table([header_row] + riadky, col_widths=[2*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm]))
             story.append(Spacer(1, 0.3*cm))
         story.append(Paragraph(f"Inštalovaný výkon kotlov v objekte spolu: <b>{vysledky.get('instalovany_vykon')} kW</b>", normal))
-        story.append(Paragraph(f"Potreba tepelného výkonu v objekte (posledný rok): <b>{vysledky.get('potrebny_vykon')} kW</b>", normal))
+        story.append(Paragraph(f"Potreba tepelného výkonu v objekte pre reálne podmienky: <b>{vysledky.get('potrebny_vykon')} kW</b>", normal))
         rezerva = vysledky.get('vykon_rezerva', 0)
         if rezerva >= 0:
-            story.append(Paragraph(f"Inštalovaný výkon kotolne pokrýva potrebu tepelného výkonu s rezervou {rezerva} kW.", normal))
+            story.append(Paragraph("Inštalovaný výkon kotolne pokrýva potrebu tepelného výkonu v objekte s dostatočnou rezervou.", normal))
         else:
-            story.append(Paragraph(f"Inštalovaný výkon kotolne nepokrýva potrebu tepelného výkonu (chýba {abs(rezerva)} kW).", normal))
+            story.append(Paragraph(f"Inštalovaný výkon kotolne nepokrýva potrebu tepelného výkonu v objekte (chýba {abs(rezerva)} kW).", normal))
         story.append(PageBreak())
 
         # --- 7. VYHODNOTENIE KONTROLY KOTLA ---
         story.append(Paragraph("7. Vyhodnotenie kontroly kotla a návrhy na opatrenia", h1))
-        story.append(Paragraph(f"Minimálna požadovaná priemerná účinnosť podľa Vyhlášky č. 328/2005 Z.z.: {vysledky.get('min_ucinnost')} %", normal))
+        story.append(Paragraph(f"A./ {data.get('navrh_a_text', '')}", normal))
+        story.append(Paragraph(f"B./ Kotol má mať v zmysle Vyhlášky č. 328/2005 Z.z. minimálnu priemernú účinnosť {vysledky.get('min_ucinnost')}%. Nameraná hodnota je:", normal))
         for k in kotly:
-            story.append(Paragraph(f"Nameraná priemerná účinnosť kotla {k['oznacenie']}: {k['priemerna_ucinnost']} %", normal))
-        splna = 'spĺňajú' if vysledky.get('celkovy_stav') == 'Vyhovuje' else 'nespĺňajú'
+            story.append(Paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;{k['oznacenie']} = {k['priemerna_ucinnost']} %", normal))
+        story.append(Paragraph(f"Priemerná účinnosť výroby tepla zistená nepriamou metódou: {vysledky.get('priemerna_ucinnost')} %", normal))
+        story.append(Paragraph(f"Priemerná účinnosť výroby tepla zistená priamou metódou: {vysledky.get('priemerna_ucinnost_priama')} %", normal))
+        splna = 'spĺňajú' if vysledky.get('celkovy_stav') == 'vyhovuje' else 'nespĺňajú'
         story.append(Paragraph(f"<b>Kotly {splna} požiadavky Vyhlášky č. 328/2005 Z.z.</b>", normal))
         story.append(Spacer(1, 0.5*cm))
 
         # --- 8. VYHODNOTENIE ROZŠÍRENEJ KONTROLY ---
         story.append(Paragraph("8. Vyhodnotenie rozšírenej kontroly vykurovacieho systému a návrh opatrení", h1))
-        if data.get('navrh_opatreni'):
-            story.append(Paragraph(f"Pre zlepšenie prevádzkového stavu navrhujeme tieto opatrenia: {data.get('navrh_opatreni')}", normal))
-        story.append(Paragraph(f"Nasledujúcu kontrolu v zmysle Zákona č. 314/2012 Z.z. je potrebné vykonať do: <b>{vysledky.get('nasledujuca_kontrola')}</b>", normal))
+        story.append(Paragraph(f"C./ Rozšírenou kontrolou rozvodov vykurovania a teplej úžitkovej vody boli zistené tieto skutočnosti: {data.get('rozsirena_zistenia', '')}", normal))
+        story.append(Paragraph(f"D./ Pre zlepšenie prevádzkového stavu navrhujeme tieto opatrenia: {data.get('navrh_opatreni', '') or '—'}", normal))
+        story.append(Paragraph("Kontrola bola vykonaná podľa Zákona č. 314/2012 Z.z. § 3, v intervale podľa § 4, príloha č.1 o pravidelnej kontrole kotlov, vykurovacieho systému a klimatizačného systému, v rozsahu podľa Vyhlášky č. 422/2012 Z.z.", normal))
+        story.append(Paragraph(f"Nasledujúcu kontrolu v zmysle Zákona č. 314/2012, príloha č. 1 je potrebné vykonať do: <b>{vysledky.get('nasledujuca_kontrola')}</b>", normal))
         story.append(Spacer(1, 1*cm))
-        story.append(Paragraph("Vlastník, prevádzkovateľ: .....................................", normal))
-        story.append(Paragraph("Oprávnená osoba: .....................................", normal))
-        story.append(Paragraph(f"Dňa: {data.get('datum_kontroly', '.....................................')}", normal))
+        story.append(Paragraph("Vlastník, prevádzkovateľ : .....................................", normal))
+        story.append(Paragraph("Oprávnená osoba : .....................................", normal))
+        story.append(Paragraph(f"Dňa : {data.get('datum_kontroly', '.....................................')}", normal))
         story.append(Spacer(1, 0.5*cm))
-        story.append(Paragraph(f"Vypracoval: {data.get('vypracoval_firma', '')}", normal))
+        story.append(Paragraph(f"Vypracoval : {data.get('vypracoval_firma', '')}", normal))
 
         footer_fn = _pdf_footer(data.get('poradove_cislo'), data.get('vypracoval_firma'))
         doc.build(story, onFirstPage=footer_fn, onLaterPages=footer_fn)
@@ -918,11 +1240,25 @@ def certifikat():
     return render_template('certifikat.html')
 
 # --- VYKUROVANIE ---
+UPLOAD_DIR = os.path.join('static', 'uploads')
+
+def uloz_fotografiu(subor):
+    if not subor or not subor.filename:
+        return ''
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    prípona = os.path.splitext(subor.filename)[1].lower()
+    if prípona not in ('.jpg', '.jpeg', '.png'):
+        return ''
+    nazov = f"kotolna_{datetime.now().strftime('%Y%m%d%H%M%S%f')}{prípona}"
+    subor.save(os.path.join(UPLOAD_DIR, nazov))
+    return os.path.join(UPLOAD_DIR, nazov)
+
 @app.route('/vykurovanie', methods=['GET', 'POST'])
 @login_required
 def vykurovanie():
     if request.method == 'POST':
         data = request.form.to_dict()
+        data['fotografia_cesta'] = uloz_fotografiu(request.files.get('fotografia'))
         vysledky = vypocitaj_vykurovanie(data)
         conn = get_db()
         conn.execute('INSERT INTO audity (typ, datum, nazov_budovy, adresa, vlastnik, udaje, vysledky) VALUES (?,?,?,?,?,?,?)',
