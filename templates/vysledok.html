@@ -18,16 +18,28 @@
 
 {% if typ == 'vykurovanie' %}
 <div class="card">
-    <div class="section-title">Meranie účinnosti kotlov — komínová strata</div>
+    <div class="section-title">4. Meranie účinnosti kotlov — komínová strata</div>
     {% for k in vysledky.kotly %}
     <div style="margin-bottom:1.2rem;padding-bottom:1.2rem;border-bottom:1px solid #e8f4ec;">
         <div style="font-weight:700;color:#1a3a2a;margin-bottom:0.5rem;">Kotol {{ k.oznacenie }} — {{ k.vyrobca }} {{ k.typ }}</div>
+        {% if k.merania %}
+        <table style="margin-bottom:0.5rem;">
+            <thead><tr><th>Zaťaženie</th><th>T spalín (°C)</th><th>T vzduchu (°C)</th><th>O₂ (%)</th><th>Komínová strata (%)</th><th>Účinnosť (%)</th></tr></thead>
+            <tbody>
+            {% for m in k.merania %}
+                <tr>
+                    <td>{{ m.zatazenie }}</td><td>{{ m.t_spalin }}</td><td>{{ m.t_vzduch }}</td>
+                    <td>{{ m.o2 }}</td><td>{{ m.komin_strata }}</td><td>{{ m.ucinnost }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color:#7a9a7a;font-size:0.9rem;">Nezadané žiadne meranie spalín.</p>
+        {% endif %}
         <div class="grid-3" style="font-size:0.9rem;">
-            <p>Teplota spalín: <strong>{{ k.teplota_spalin }} °C</strong></p>
-            <p>Teplota vzduchu: <strong>{{ k.teplota_vzduchu }} °C</strong></p>
-            <p>O₂ v spalinách: <strong>{{ k.o2 }} %</strong></p>
-            <p>Komínová strata: <strong>{{ k.komin_strata }} %</strong></p>
-            <p>Účinnosť kotla: <strong>{{ k.ucinnost }} %</strong></p>
+            <p>Priemerná účinnosť: <strong>{{ k.priemerna_ucinnost }} %</strong></p>
+            {% if k.garantovana_ucinnost %}<p>Garantovaná (výrobca): <strong>{{ k.garantovana_ucinnost }} %</strong></p>{% endif %}
             <p>Vyhodnotenie:
                 <span style="font-weight:700;color:{% if k.stav == 'Vyhovuje' %}#2c7a4b{% else %}#f44336{% endif %};">{{ k.stav }}</span>
             </p>
@@ -40,16 +52,45 @@
 </div>
 
 <div class="card">
-    <div class="section-title">Účinnosť výroby tepla priamou metódou</div>
+    <div class="section-title">5. Účinnosť výroby tepla priamou metódou</div>
+    {% if vysledky.roky %}
+    <table>
+        <thead><tr><th>Rok</th><th>Odber paliva</th><th>Teplo v palive (kWh)</th><th>Vyrobené teplo (kWh)</th><th>Účinnosť (%)</th><th>Podiel TÚV (%)</th></tr></thead>
+        <tbody>
+        {% for r in vysledky.roky %}
+            <tr>
+                <td>{{ r.rok }}</td><td>{{ r.odber_paliva }}</td><td>{{ r.teplo_v_palive }}</td>
+                <td>{{ r.vyrobene_teplo }}</td><td>{{ r.ucinnost_priama }}</td><td>{{ r.podiel_tuv }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color:#7a9a7a;">Neboli zadané ročné údaje o spotrebe paliva.</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="section-title">6. Posúdenie výkonu kotla vzhľadom na potrebu tepla</div>
+    {% if vysledky.roky %}
+    <table style="margin-bottom:0.8rem;">
+        <thead><tr><th>Rok</th><th>Počet vykurovacích dní</th><th>Potrebný výkon (kW)</th></tr></thead>
+        <tbody>
+        {% for r in vysledky.roky %}
+            <tr><td>{{ r.rok }}</td><td>{{ r.pocet_dni }}</td><td>{{ r.potrebny_vykon }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
     <div class="grid-3">
-        <p>Teplo v palive: <strong>{{ vysledky.teplo_v_palive }} kWh</strong></p>
-        <p>Vyrobené teplo: <strong>{{ data.get('vyrobene_teplo', '—') }} kWh</strong></p>
-        <p>Účinnosť priamou metódou: <strong>{{ vysledky.ucinnost_priama_metoda }} %</strong></p>
+        <p>Inštalovaný výkon: <strong>{{ vysledky.instalovany_vykon }} kW</strong></p>
+        <p>Potrebný výkon (posl. rok): <strong>{{ vysledky.potrebny_vykon }} kW</strong></p>
+        <p>Rezerva: <strong style="color:{% if vysledky.vykon_rezerva >= 0 %}#2c7a4b{% else %}#f44336{% endif %};">{{ vysledky.vykon_rezerva }} kW</strong></p>
     </div>
 </div>
 
 <div class="card">
-    <div class="section-title">Celkové vyhodnotenie</div>
+    <div class="section-title">7. + 8. Celkové vyhodnotenie</div>
     <div style="display:flex;justify-content:space-between;align-items:center;padding:0.7rem 0;border-bottom:1px solid #e8f4ec;">
         <span style="font-weight:600;color:#4a6a4a;">Priemerná účinnosť kotlov</span>
         <span style="font-size:1.1rem;font-weight:700;">{{ vysledky.priemerna_ucinnost }} %</span>
