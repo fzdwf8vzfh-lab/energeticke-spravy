@@ -1,83 +1,281 @@
 {% extends 'base.html' %}
 {% block title %}Kontrola vykurovacích systémov{% endblock %}
 {% block content %}
-<h1>🔥 Kontrola vykurovacích systémov</h1>
+<h1>🔥 Pravidelná kontrola vykurovacieho systému</h1>
+<p style="color:#7a9a7a;font-size:0.85rem;margin-top:-1rem;margin-bottom:1.5rem;">podľa Zákona č. 314/2012 Z.z. a Vyhl. č. 422/2012 Z.z.</p>
 <form method="POST">
     <div class="card">
-        <div class="section-title">Identifikácia budovy</div>
+        <div class="section-title">Identifikácia objektu a správy</div>
         <div class="grid-2">
             <div class="form-group">
-                <label>Názov budovy / zákazníka *</label>
-                <input type="text" name="nazov_budovy" required placeholder="napr. Kotolňa Zvolen">
+                <label>Objekt / názov budovy *</label>
+                <input type="text" name="nazov_budovy" required placeholder="napr. Bytový dom">
             </div>
             <div class="form-group">
-                <label>Vlastník</label>
+                <label>Majiteľ / vlastník</label>
                 <input type="text" name="vlastnik" placeholder="Meno vlastníka">
             </div>
         </div>
         <div class="form-group">
-            <label>Adresa *</label>
+            <label>Lokalita / adresa *</label>
             <input type="text" name="adresa" required placeholder="Ulica, č., mesto, PSČ">
         </div>
-
-        <div class="section-title">Parametre kotla</div>
-        <div class="grid-3">
-            <div class="form-group">
-                <label>Typ kotla</label>
-                <select name="typ_kotla">
-                    <option value="">-- Vyberte --</option>
-                    <option>Kondenzačný kotol - plyn</option>
-                    <option>Štandardný kotol - plyn</option>
-                    <option>Nízkoteplotný kotol - plyn</option>
-                    <option>Kotol na tuhé palivo</option>
-                    <option>Kotol na biomasu</option>
-                    <option>Elektrický kotol</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Výkon kotla (kW) *</label>
-                <input type="number" name="vykon_kotla" required step="0.1" min="0" placeholder="napr. 24">
-            </div>
-            <div class="form-group">
-                <label>Vek kotla (roky) *</label>
-                <input type="number" name="vek_kotla" required min="0" max="50" placeholder="napr. 8">
-            </div>
-        </div>
-        <div class="grid-3">
-            <div class="form-group">
-                <label>Nameraná účinnosť (%) *</label>
-                <input type="number" name="ucinnost" required step="0.1" min="0" max="110" placeholder="napr. 85">
-            </div>
-            <div class="form-group">
-                <label>Teplota spalín (°C)</label>
-                <input type="number" name="teplota_spalin" step="0.1" placeholder="napr. 120">
-            </div>
-            <div class="form-group">
-                <label>Obsah CO₂ (%)</label>
-                <input type="number" name="co2" step="0.1" min="0" max="20" placeholder="napr. 8.5">
-            </div>
-        </div>
-
-        <div class="section-title">Vykurovacia sústava</div>
         <div class="grid-2">
             <div class="form-group">
-                <label>Typ vykurovacej sústavy</label>
-                <select name="typ_sustavy">
+                <label>Správca</label>
+                <input type="text" name="spravca" placeholder="napr. Mgr. Milan Kuzma">
+            </div>
+            <div class="form-group">
+                <label>Vypracoval (firma)</label>
+                <input type="text" name="vypracoval_firma" placeholder="napr. Termea, spol. s r. o.">
+            </div>
+        </div>
+        <div class="grid-3">
+            <div class="form-group">
+                <label>Dátum kontroly (MM/RRRR)</label>
+                <input type="text" name="datum_kontroly" placeholder="napr. 02/2026">
+            </div>
+            <div class="form-group">
+                <label>Poradové číslo</label>
+                <input type="text" name="poradove_cislo" placeholder="napr. Te/2026/01">
+            </div>
+            <div class="form-group">
+                <label>Interval nasledujúcej kontroly (roky)</label>
+                <select name="interval_kontroly">
+                    <option value="2">2 roky</option>
+                    <option value="4" selected>4 roky</option>
+                    <option value="10">10 rokov</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="section-title">Kotol K1</div>
+        <div class="grid-3">
+            <div class="form-group">
+                <label>Výrobca</label>
+                <input type="text" name="k1_vyrobca" placeholder="napr. Viessmann">
+            </div>
+            <div class="form-group">
+                <label>Typ kotla</label>
+                <input type="text" name="k1_typ" placeholder="napr. Vitocrossal 200">
+            </div>
+            <div class="form-group">
+                <label>Výrobné číslo</label>
+                <input type="text" name="k1_vyrobne_cislo">
+            </div>
+        </div>
+        <div class="grid-3">
+            <div class="form-group">
+                <label>Rok výroby</label>
+                <input type="number" name="k1_rok_vyroby" min="1970" max="2100">
+            </div>
+            <div class="form-group">
+                <label>Menovitý výkon (kW) *</label>
+                <input type="number" name="k1_menovity_vykon" required step="0.1" min="0">
+            </div>
+            <div class="form-group">
+                <label>Druh paliva</label>
+                <select name="k1_typ_paliva">
+                    <option>Zemný plyn</option>
+                    <option>Vykurovací olej</option>
+                    <option>Tuhé palivo - čierne uhlie</option>
+                    <option>Tuhé palivo - drevo/biomasa</option>
+                </select>
+            </div>
+        </div>
+        <div class="section-title" style="margin-top:1rem;">Meranie spalín (na výpočet komínovej straty a účinnosti)</div>
+        <div class="grid-3">
+            <div class="form-group">
+                <label>Teplota spalín (°C)</label>
+                <input type="number" name="k1_teplota_spalin" step="0.1" placeholder="napr. 59.8">
+            </div>
+            <div class="form-group">
+                <label>Teplota spaľovacieho vzduchu (°C)</label>
+                <input type="number" name="k1_teplota_vzduchu" step="0.1" placeholder="napr. 20.1">
+            </div>
+            <div class="form-group">
+                <label>Obsah O₂ v spalinách (%)</label>
+                <input type="number" name="k1_o2" step="0.1" min="0" max="20.9" placeholder="napr. 5.9">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="section-title">Kotol K2 (nepovinné)</div>
+        <div class="grid-3">
+            <div class="form-group">
+                <label>Výrobca</label>
+                <input type="text" name="k2_vyrobca">
+            </div>
+            <div class="form-group">
+                <label>Typ kotla</label>
+                <input type="text" name="k2_typ">
+            </div>
+            <div class="form-group">
+                <label>Výrobné číslo</label>
+                <input type="text" name="k2_vyrobne_cislo">
+            </div>
+        </div>
+        <div class="grid-3">
+            <div class="form-group">
+                <label>Rok výroby</label>
+                <input type="number" name="k2_rok_vyroby" min="1970" max="2100">
+            </div>
+            <div class="form-group">
+                <label>Menovitý výkon (kW)</label>
+                <input type="number" name="k2_menovity_vykon" step="0.1" min="0">
+            </div>
+            <div class="form-group">
+                <label>Druh paliva</label>
+                <select name="k2_typ_paliva">
+                    <option>Zemný plyn</option>
+                    <option>Vykurovací olej</option>
+                    <option>Tuhé palivo - čierne uhlie</option>
+                    <option>Tuhé palivo - drevo/biomasa</option>
+                </select>
+            </div>
+        </div>
+        <div class="section-title" style="margin-top:1rem;">Meranie spalín</div>
+        <div class="grid-3">
+            <div class="form-group">
+                <label>Teplota spalín (°C)</label>
+                <input type="number" name="k2_teplota_spalin" step="0.1">
+            </div>
+            <div class="form-group">
+                <label>Teplota spaľovacieho vzduchu (°C)</label>
+                <input type="number" name="k2_teplota_vzduchu" step="0.1">
+            </div>
+            <div class="form-group">
+                <label>Obsah O₂ v spalinách (%)</label>
+                <input type="number" name="k2_o2" step="0.1" min="0" max="20.9">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="section-title">Legislatívna požiadavka</div>
+        <div class="form-group">
+            <label>Minimálna požadovaná účinnosť podľa Vyhl. č. 328/2005 Z.z. (%)</label>
+            <input type="number" name="min_ucinnost" step="0.1" value="96">
+        </div>
+
+        <div class="section-title">Účinnosť výroby tepla priamou metódou (ročné údaje)</div>
+        <div class="grid-3">
+            <div class="form-group">
+                <label>Ročná spotreba paliva</label>
+                <input type="number" name="rocna_spotreba_paliva" step="0.01" placeholder="napr. 51107 (m³)">
+            </div>
+            <div class="form-group">
+                <label>Výhrevnosť paliva (kWh/jedn.)</label>
+                <input type="number" name="vyhrevnost" step="0.001" placeholder="napr. 9.86">
+            </div>
+            <div class="form-group">
+                <label>Vyrobené teplo za rok (kWh)</label>
+                <input type="number" name="vyrobene_teplo" step="0.01" placeholder="napr. 479222">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="section-title">Vizuálna kontrola a stav vykurovacej sústavy</div>
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Stav kotla</label>
+                <select name="stav_kotla">
                     <option value="">-- Vyberte --</option>
-                    <option>Radiátorová sústava</option>
-                    <option>Podlahové vykurovanie</option>
-                    <option>Kombinovaná sústava</option>
-                    <option>Vzduchová sústava</option>
+                    <option>Vyhovujúci</option>
+                    <option>Nevyhovujúci</option>
                 </select>
             </div>
             <div class="form-group">
-                <label>Posledný servis</label>
-                <input type="text" name="posledny_servis" placeholder="napr. 03/2023">
+                <label>Únik paliva</label>
+                <select name="unik_paliva">
+                    <option value="">-- Vyberte --</option>
+                    <option>Nezistený</option>
+                    <option>Zistený</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Únik teplonosnej látky</label>
+                <select name="unik_teplonosnej_latky">
+                    <option value="">-- Vyberte --</option>
+                    <option>Nezistený</option>
+                    <option>Zistený</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Znečistenie spaľovacej komory / horákov</label>
+                <select name="znecistenie">
+                    <option value="">-- Vyberte --</option>
+                    <option>Bez závad</option>
+                    <option>Zistené znečistenie</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Funkčnosť armatúr</label>
+                <select name="armatury">
+                    <option value="">-- Vyberte --</option>
+                    <option>Funkčné, tesné</option>
+                    <option>Nefunkčné / netesné</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Kvalita teplonosnej látky</label>
+                <select name="kvalita_vody">
+                    <option value="">-- Vyberte --</option>
+                    <option>Čistá, bez zakalenia</option>
+                    <option>Znečistená</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Meracie prístroje</label>
+                <select name="meracie_pristroje">
+                    <option value="">-- Vyberte --</option>
+                    <option>Funkčné</option>
+                    <option>Nefunkčné</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Čistota kotolne</label>
+                <select name="cistota_kotolne">
+                    <option value="">-- Vyberte --</option>
+                    <option>Čistá</option>
+                    <option>Znečistená</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Vykurovacie telesá</label>
+                <select name="vykurovacie_telesa">
+                    <option value="">-- Vyberte --</option>
+                    <option>Panelové s TRV</option>
+                    <option>Článkové radiátory</option>
+                    <option>Podlahové vykurovanie</option>
+                    <option>Kombinované</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Tepelná izolácia rozvodov</label>
+                <select name="tepelna_izolacia_rozvodov">
+                    <option value="">-- Vyberte --</option>
+                    <option>Bez poškodenia</option>
+                    <option>Čiastočne poškodená</option>
+                    <option>Chýba</option>
+                </select>
             </div>
         </div>
         <div class="form-group">
-            <label>Poznámky a zistené závady</label>
-            <textarea name="poznamky" rows="3" style="width:100%;padding:0.7rem 1rem;border:1.5px solid #c8e0c8;border-radius:8px;font-size:0.95rem;font-family:inherit;" placeholder="Popíšte zistené závady, stav izolácie potrubí, stav expanznej nádoby..."></textarea>
+            <label>Stav rozvodov tepla a TÚV</label>
+            <input type="text" name="stav_rozvodov" placeholder="napr. bez zjavných závad">
+        </div>
+        <div class="form-group">
+            <label>Zmena využívania budovy/rozvodov od poslednej kontroly</label>
+            <input type="text" name="zmena_vyuzivania" placeholder="napr. Využívanie nebolo zmenené.">
+        </div>
+        <div class="form-group">
+            <label>Návrh opatrení</label>
+            <textarea name="navrh_opatreni" rows="3" style="width:100%;padding:0.7rem 1rem;border:1.5px solid #c8e0c8;border-radius:8px;font-size:0.95rem;font-family:inherit;" placeholder="napr. Zvážiť inštaláciu solárnych kolektorov, prehodnotiť využitie tepelného čerpadla..."></textarea>
         </div>
 
         <div style="margin-top:1.5rem;display:flex;gap:1rem;">
