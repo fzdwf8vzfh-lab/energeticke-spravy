@@ -9,6 +9,7 @@ import io
 from docx import Document
 from docx.shared import Pt, RGBColor, Inches, Cm
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.section import WD_SECTION
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
@@ -407,6 +408,18 @@ def _shade_cell(cell, hex_color=TABLE_SHADE_HEX):
     shd.set(qn('w:fill'), hex_color)
     tcPr.append(shd)
 
+def _zero_table_indent(table):
+    """Zarovná ľavý okraj tabuľky presne s ľavým okrajom bežného textu (odstráni tblInd)."""
+    table.alignment = WD_TABLE_ALIGNMENT.LEFT
+    tblPr = table._tbl.tblPr
+    existing = tblPr.find(qn('w:tblInd'))
+    if existing is not None:
+        tblPr.remove(existing)
+    tblInd = OxmlElement('w:tblInd')
+    tblInd.set(qn('w:w'), '0')
+    tblInd.set(qn('w:type'), 'dxa')
+    tblPr.append(tblInd)
+
 def _docx_table_caption(doc, counter, caption):
     counter[0] += 1
     p = doc.add_paragraph(f"Tabuľka č. {counter[0]} – {caption}" if caption else f"Tabuľka č. {counter[0]}")
@@ -423,6 +436,7 @@ def _docx_table(doc, header_row, data_rows, counter=None, caption=None):
     table = doc.add_table(rows=1, cols=len(header_row))
     table.style = 'Table Grid'
     table.autofit = False
+    _zero_table_indent(table)
     for i, h in enumerate(header_row):
         _cell(table.rows[0].cells[i], h, bold=True)
         _shade_cell(table.rows[0].cells[i])
@@ -861,6 +875,7 @@ def _pdf_table(rows, col_widths=None, header=True):
         wrapped.append(wrapped_row)
 
     t = Table(wrapped, colWidths=col_widths)
+    t.hAlign = 'LEFT'
     style = [
         ('GRID', (0, 0), (-1, -1), 0.6, colors.black),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
