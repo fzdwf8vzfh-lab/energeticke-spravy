@@ -8,7 +8,7 @@ import io
 # Word generovanie
 from docx import Document
 from docx.shared import Pt, RGBColor, Inches, Cm
-from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_TAB_ALIGNMENT
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.section import WD_SECTION
 from docx.oxml.ns import qn
@@ -476,7 +476,7 @@ def _docx_kotly_identifikacia(doc, kotly, counter=None, caption=None):
     _docx_table(doc, header, data_rows, counter=counter, caption=caption)
 
 def _add_bottom_border(paragraph):
-    """Súvislé podčiarknutie cez celú šírku strany (hlavička dokumentu)."""
+    """Čiara pod textom (hlavička dokumentu) - na šírku tabuliek/textu (medzi okrajmi)."""
     pPr = paragraph._p.get_or_add_pPr()
     pBdr = OxmlElement('w:pBdr')
     bottom = OxmlElement('w:bottom')
@@ -486,6 +486,35 @@ def _add_bottom_border(paragraph):
     bottom.set(qn('w:color'), '000000')
     pBdr.append(bottom)
     pPr.append(pBdr)
+
+def _add_top_border(paragraph):
+    """Čiara nad textom (päta dokumentu) - na šírku tabuliek/textu (medzi okrajmi)."""
+    pPr = paragraph._p.get_or_add_pPr()
+    pBdr = OxmlElement('w:pBdr')
+    top = OxmlElement('w:top')
+    top.set(qn('w:val'), 'single')
+    top.set(qn('w:sz'), '6')
+    top.set(qn('w:space'), '4')
+    top.set(qn('w:color'), '000000')
+    pBdr.append(top)
+    pPr.append(pBdr)
+
+def _add_page_number_field(paragraph):
+    """Vloží pole PAGE (automatické číslo strany) na koniec odseku."""
+    run = paragraph.add_run()
+    run.font.name = 'Times New Roman'
+    run.font.size = Pt(9)
+    fld_begin = OxmlElement('w:fldChar')
+    fld_begin.set(qn('w:fldCharType'), 'begin')
+    instr = OxmlElement('w:instrText')
+    instr.set(qn('xml:space'), 'preserve')
+    instr.text = 'PAGE'
+    fld_end = OxmlElement('w:fldChar')
+    fld_end.set(qn('w:fldCharType'), 'end')
+    run._r.append(fld_begin)
+    run._r.append(instr)
+    run._r.append(fld_end)
+    return run
 
 # ============================================================
 # GENEROVANIE WORD
@@ -497,7 +526,7 @@ def generuj_word(typ, data, vysledky):
     nazov = {
         'audit': 'ENERGETICKÝ AUDIT',
         'certifikat': 'ENERGETICKÝ CERTIFIKÁT',
-        'vykurovanie': 'Správa z vykonanej pravidelnej kontroly vykurovacieho systému'
+        'vykurovanie': 'Správa z vykonanej pravidelnej kontroly vykurovacieho systému podľa Zákona č. 314/2012 Z.z.'
     }.get(typ, 'SPRÁVA')
 
     h = doc.add_heading(nazov, 0)
@@ -505,6 +534,7 @@ def generuj_word(typ, data, vysledky):
     for run in h.runs:
         run.font.name = 'Times New Roman'
         run.font.color.rgb = RGBColor(0x8B, 0x1A, 0x1A)
+        run.font.size = Pt(20)
 
     if typ == 'vykurovanie':
         kotly = vysledky.get('kotly', [])
@@ -513,10 +543,6 @@ def generuj_word(typ, data, vysledky):
         ma_tc = any(data.get(k) for k in ['tc_vyrobca', 'tc_typ', 'tc_prevadzkovy_stav'])
         tc = [0]  # zdieľaný počítadlo tabuliek
 
-        sub = doc.add_paragraph("podľa Zákona č. 314/2012 Z.z.")
-        sub.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        for run in sub.runs:
-            run.font.name = 'Times New Roman'
         doc.add_paragraph("")
 
         for label, key, extra in [
@@ -603,11 +629,22 @@ def generuj_word(typ, data, vysledky):
         _add_bottom_border(hp)
 
         fp = section2.footer.paragraphs[0]
-        fp.text = data.get('vypracoval_firma', '')
-        fp.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        for run in fp.runs:
-            run.font.name = 'Times New Roman'
-            run.font.size = Pt(9)
+        usable_width = section2.page_width - section2.left_margin - section2.right_margin
+        fp.paragraph_format.tab_stops.add_tab_stop(int(usable_width / 2), WD_TAB_ALIGNMENT.CENTER)
+        fp.paragraph_format.tab_stops.add_tab_stop(int(usable_width), WD_TAB_ALIGNMENT.RIGHT)
+        r1 = fp.add_run(data.get('poradove_cislo', ''))
+        r1.font.name = 'Times New Roman'
+        r1.font.size = Pt(9)
+        fp.add_run('\t')
+        r2 = fp.add_run(data.get('vypracoval_firma', ''))
+        r2.font.name = 'Times New Roman'
+        r2.font.size = Pt(9)
+        fp.add_run('\t')
+        r3 = fp.add_run('strana ')
+        r3.font.name = 'Times New Roman'
+        r3.font.size = Pt(9)
+        _add_page_number_field(fp)
+        _add_top_border(fp)
 
         # --- 1. KONTROLA KOTLA ---
         _docx_section_heading(doc, "1. Kontrola kotla")
@@ -899,19 +936,34 @@ def _pdf_add_table(story, counter, caption, rows, col_widths=None, header=True):
     story.append(_pdf_table(rows, col_widths=col_widths, header=header))
     story.append(Spacer(1, 0.4*cm))
 
-def _pdf_header_footer(objekt, lokalita, firma):
-    """Hlavička (Objekt, Lokalita + podčiarknutie) a päta (názov firmy) - okrem prvých 2 strán."""
+def _pdf_header_footer(objekt, lokalita, firma, poradove_cislo):
+    """Hlavička (Objekt, Lokalita + čiara) a päta (poradové číslo, firma, strana + čiara) -
+    obe čiary iba na šírku tabuliek v dokumente (medzi okrajmi), nie cez celú stranu.
+    Zobrazuje sa okrem prvých 2 strán."""
+    line_x1 = 2*cm
+    line_x2 = A4[0] - 2*cm
+
     def _draw(canvas, doc):
         if doc.page <= 2:
             return
         canvas.saveState()
+
+        # --- Hlavička ---
         canvas.setFont(PDF_FONT, 9)
         header_text = ", ".join([t for t in [objekt, lokalita] if t])
         header_y = A4[1] - 1.3*cm
         canvas.drawCentredString(A4[0] / 2, header_y, header_text)
-        canvas.line(0, header_y - 0.15*cm, A4[0], header_y - 0.15*cm)
+        canvas.line(line_x1, header_y - 0.15*cm, line_x2, header_y - 0.15*cm)
+
+        # --- Päta ---
+        footer_line_y = 1.7*cm
+        footer_text_y = 1.3*cm
+        canvas.line(line_x1, footer_line_y, line_x2, footer_line_y)
         canvas.setFont(PDF_FONT, 9)
-        canvas.drawCentredString(A4[0] / 2, 1.3*cm, str(firma or ''))
+        canvas.drawString(line_x1, footer_text_y, str(poradove_cislo or ''))
+        canvas.drawCentredString(A4[0] / 2, footer_text_y, str(firma or ''))
+        canvas.drawRightString(line_x2, footer_text_y, f"strana {doc.page}")
+
         canvas.restoreState()
     return _draw
 
@@ -947,8 +999,7 @@ def generuj_pdf(typ, data, vysledky):
         ma_tc = any(data.get(k) for k in ['tc_vyrobca', 'tc_typ', 'tc_prevadzkovy_stav'])
         tc = [0]  # zdieľané počítadlo tabuliek
 
-        story.append(Paragraph(nazov, title_style))
-        story.append(Paragraph("podľa Zákona č. 314/2012 Z.z.", ParagraphStyle('sub', parent=normal, alignment=TA_CENTER)))
+        story.append(Paragraph(f"{nazov} podľa Zákona č. 314/2012 Z.z.", title_style))
         story.append(Spacer(1, 1*cm))
 
         for label, key in [
@@ -1253,7 +1304,7 @@ def generuj_pdf(typ, data, vysledky):
         story.append(Spacer(1, 0.5*cm))
         story.append(Paragraph(f"Vypracoval : {data.get('vypracoval_firma', '')}", normal))
 
-        header_footer_fn = _pdf_header_footer(data.get('nazov_budovy'), data.get('adresa'), data.get('vypracoval_firma'))
+        header_footer_fn = _pdf_header_footer(data.get('nazov_budovy'), data.get('adresa'), data.get('vypracoval_firma'), data.get('poradove_cislo'))
         doc.build(story, onFirstPage=header_footer_fn, onLaterPages=header_footer_fn)
         buf.seek(0)
         return buf
