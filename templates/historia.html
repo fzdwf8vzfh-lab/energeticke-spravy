@@ -5,6 +5,9 @@
 
 <div class="card">
     {% if zaznamy %}
+    <div style="margin-bottom:1rem;">
+        <a href="{{ url_for('export_excel') }}" class="btn btn-outline">⬇ Export do Excelu (.xlsx)</a>
+    </div>
     <table>
         <thead>
             <tr>
