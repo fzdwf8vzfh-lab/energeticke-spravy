@@ -4,6 +4,12 @@ from datetime import datetime
 import sqlite3
 import os
 import io
+import ast
+
+# Excel export
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.utils import get_column_letter
 
 # Word generovanie
 from docx import Document
@@ -1493,6 +1499,69 @@ def historia():
     zaznamy = conn.execute('SELECT * FROM audity ORDER BY datum DESC').fetchall()
     conn.close()
     return render_template('historia.html', zaznamy=zaznamy)
+
+# --- EXPORT DO EXCELU ---
+def _parsuj_ulozeny_dict(text):
+    """udaje/vysledky sa ukladajú ako str(dict) - bezpečne ich spätne rozparsuje."""
+    try:
+        return ast.literal_eval(text)
+    except (ValueError, SyntaxError):
+        return {}
+
+def _zhrnutie_vysledkov(typ, vysledky_text):
+    v = _parsuj_ulozeny_dict(vysledky_text)
+    if typ in ('audit', 'certifikat'):
+        return v.get('trieda', '')
+    if typ == 'vykurovanie':
+        stav = v.get('celkovy_stav', '')
+        ucinnost = v.get('priemerna_ucinnost', '')
+        if stav and ucinnost != '':
+            return f"{stav} ({ucinnost} %)"
+        return stav
+    return ''
+
+@app.route('/export/excel')
+@login_required
+def export_excel():
+    conn = get_db()
+    zaznamy = conn.execute('SELECT * FROM audity ORDER BY datum DESC').fetchall()
+    conn.close()
+
+    nazov_typu = {'audit': 'Energetický audit', 'certifikat': 'Energetický certifikát', 'vykurovanie': 'Kontrola vykurovania'}
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'História'
+
+    hlavicky = ['ID', 'Dátum', 'Typ', 'Budova', 'Adresa', 'Vlastník', 'Zhrnutie výsledkov']
+    ws.append(hlavicky)
+    hlavicka_fill = PatternFill(start_color='2C7A4B', end_color='2C7A4B', fill_type='solid')
+    for col in range(1, len(hlavicky) + 1):
+        cell = ws.cell(row=1, column=col)
+        cell.font = Font(bold=True, color='FFFFFF')
+        cell.fill = hlavicka_fill
+        cell.alignment = Alignment(horizontal='left', vertical='center')
+
+    for z in zaznamy:
+        ws.append([
+            z['id'], z['datum'], nazov_typu.get(z['typ'], z['typ']),
+            z['nazov_budovy'], z['adresa'], z['vlastnik'],
+            _zhrnutie_vysledkov(z['typ'], z['vysledky']),
+        ])
+
+    for col_idx, h in enumerate(hlavicky, start=1):
+        dlzky = [len(str(h))] + [len(str(ws.cell(row=r, column=col_idx).value or '')) for r in range(2, ws.max_row + 1)]
+        ws.column_dimensions[get_column_letter(col_idx)].width = min(max(dlzky) + 2, 50)
+
+    ws.freeze_panes = 'A2'
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    datum = datetime.now().strftime('%Y%m%d')
+    return send_file(buf, as_attachment=True,
+                      download_name=f"historia_zaznamov_{datum}.xlsx",
+                      mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
 with app.app_context():
     init_db()
