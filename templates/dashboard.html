@@ -4,6 +4,13 @@
 <h1>Dashboard</h1>
 
 <div class="grid-3">
+    <a href="{{ url_for('vykurovanie') }}" style="text-decoration:none;">
+        <div class="card" style="text-align:center;cursor:pointer;transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='none'">
+            <div style="font-size:2.5rem;margin-bottom:1rem;">🔥</div>
+            <h2>Kontrola vykurovania</h2>
+            <p style="color:#7a90a8;font-size:0.9rem;margin-top:0.5rem;">Hodnotenie stavu kotlov a vykurovacích systémov</p>
+        </div>
+    </a>
     <a href="{{ url_for('audit') }}" style="text-decoration:none;">
         <div class="card" style="text-align:center;cursor:pointer;transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='none'">
             <div style="font-size:2.5rem;margin-bottom:1rem;">🔍</div>
@@ -16,13 +23,6 @@
             <div style="font-size:2.5rem;margin-bottom:1rem;">📋</div>
             <h2>Energetický certifikát</h2>
             <p style="color:#7a90a8;font-size:0.9rem;margin-top:0.5rem;">Certifikácia budov podľa platnej legislatívy</p>
-        </div>
-    </a>
-    <a href="{{ url_for('vykurovanie') }}" style="text-decoration:none;">
-        <div class="card" style="text-align:center;cursor:pointer;transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='none'">
-            <div style="font-size:2.5rem;margin-bottom:1rem;">🔥</div>
-            <h2>Kontrola vykurovania</h2>
-            <p style="color:#7a90a8;font-size:0.9rem;margin-top:0.5rem;">Hodnotenie stavu kotlov a vykurovacích systémov</p>
         </div>
     </a>
 </div>
