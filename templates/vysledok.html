@@ -20,8 +20,8 @@
 <div class="card">
     <div class="section-title">4. Meranie účinnosti kotlov — komínová strata</div>
     {% for k in vysledky.kotly %}
-    <div style="margin-bottom:1.2rem;padding-bottom:1.2rem;border-bottom:1px solid #e8f4ec;">
-        <div style="font-weight:700;color:#1a3a2a;margin-bottom:0.5rem;">Kotol {{ k.oznacenie }} — {{ k.vyrobca }} {{ k.typ }}</div>
+    <div style="margin-bottom:1.2rem;padding-bottom:1.2rem;border-bottom:1px solid #e8f0f7;">
+        <div style="font-weight:700;color:#1a2e4a;margin-bottom:0.5rem;">Kotol {{ k.oznacenie }} — {{ k.vyrobca }} {{ k.typ }}</div>
         {% if k.merania %}
         <table style="margin-bottom:0.5rem;">
             <thead><tr><th>Zaťaženie</th><th>T spalín (°C)</th><th>T vzduchu (°C)</th><th>O₂ (%)</th><th>Komínová strata (%)</th><th>Účinnosť (%)</th></tr></thead>
@@ -35,20 +35,20 @@
             </tbody>
         </table>
         {% else %}
-        <p style="color:#7a9a7a;font-size:0.9rem;">Nezadané žiadne meranie spalín.</p>
+        <p style="color:#7a90a8;font-size:0.9rem;">Nezadané žiadne meranie spalín.</p>
         {% endif %}
         <div class="grid-3" style="font-size:0.9rem;">
             <p>Priemerná účinnosť: <strong>{{ k.priemerna_ucinnost }} %</strong></p>
             {% if k.garantovana_ucinnost %}<p>Garantovaná (výrobca): <strong>{{ k.garantovana_ucinnost }} %</strong></p>{% endif %}
             <p>Vyhodnotenie:
-                <span style="font-weight:700;color:{% if k.stav == 'vyhovuje' %}#2c7a4b{% else %}#f44336{% endif %};">{{ k.stav }}</span>
+                <span style="font-weight:700;color:{% if k.stav == 'vyhovuje' %}#2c5f8a{% else %}#f44336{% endif %};">{{ k.stav }}</span>
             </p>
         </div>
     </div>
     {% else %}
-    <p style="color:#7a9a7a;">Neboli zadané žiadne kotly s výsledkami merania.</p>
+    <p style="color:#7a90a8;">Neboli zadané žiadne kotly s výsledkami merania.</p>
     {% endfor %}
-    <p style="font-size:0.85rem;color:#7a9a7a;">Minimálna požadovaná účinnosť podľa Vyhl. č. 328/2005 Z.z.: {{ vysledky.min_ucinnost }} %</p>
+    <p style="font-size:0.85rem;color:#7a90a8;">Minimálna požadovaná účinnosť podľa Vyhl. č. 328/2005 Z.z.: {{ vysledky.min_ucinnost }} %</p>
 </div>
 
 <div class="card">
@@ -66,7 +66,7 @@
         </tbody>
     </table>
     {% else %}
-    <p style="color:#7a9a7a;">Neboli zadané ročné údaje o spotrebe paliva.</p>
+    <p style="color:#7a90a8;">Neboli zadané ročné údaje o spotrebe paliva.</p>
     {% endif %}
 </div>
 
@@ -85,26 +85,26 @@
     <div class="grid-3">
         <p>Inštalovaný výkon: <strong>{{ vysledky.instalovany_vykon }} kW</strong></p>
         <p>Potrebný výkon (posl. rok): <strong>{{ vysledky.potrebny_vykon }} kW</strong></p>
-        <p>Rezerva: <strong style="color:{% if vysledky.vykon_rezerva >= 0 %}#2c7a4b{% else %}#f44336{% endif %};">{{ vysledky.vykon_rezerva }} kW</strong></p>
+        <p>Rezerva: <strong style="color:{% if vysledky.vykon_rezerva >= 0 %}#2c5f8a{% else %}#f44336{% endif %};">{{ vysledky.vykon_rezerva }} kW</strong></p>
     </div>
 </div>
 
 <div class="card">
     <div class="section-title">7. + 8. Celkové vyhodnotenie</div>
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:0.7rem 0;border-bottom:1px solid #e8f4ec;">
-        <span style="font-weight:600;color:#4a6a4a;">Priemerná účinnosť kotlov</span>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:0.7rem 0;border-bottom:1px solid #e8f0f7;">
+        <span style="font-weight:600;color:#4a5f7a;">Priemerná účinnosť kotlov</span>
         <span style="font-size:1.1rem;font-weight:700;">{{ vysledky.priemerna_ucinnost }} %</span>
     </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:0.7rem 0;border-bottom:1px solid #e8f4ec;">
-        <span style="font-weight:600;color:#4a6a4a;">Priemerná účinnosť priamou metódou</span>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:0.7rem 0;border-bottom:1px solid #e8f0f7;">
+        <span style="font-weight:600;color:#4a5f7a;">Priemerná účinnosť priamou metódou</span>
         <span style="font-size:1.1rem;font-weight:700;">{{ vysledky.priemerna_ucinnost_priama }} %</span>
     </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:0.7rem 0;border-bottom:1px solid #e8f4ec;">
-        <span style="font-weight:600;color:#4a6a4a;">Celkové vyhodnotenie</span>
-        <span style="font-size:1.1rem;font-weight:700;color:{% if vysledky.celkovy_stav == 'vyhovuje' %}#2c7a4b{% else %}#f44336{% endif %};">{{ vysledky.celkovy_stav }}</span>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:0.7rem 0;border-bottom:1px solid #e8f0f7;">
+        <span style="font-weight:600;color:#4a5f7a;">Celkové vyhodnotenie</span>
+        <span style="font-size:1.1rem;font-weight:700;color:{% if vysledky.celkovy_stav == 'vyhovuje' %}#2c5f8a{% else %}#f44336{% endif %};">{{ vysledky.celkovy_stav }}</span>
     </div>
     <div style="display:flex;justify-content:space-between;align-items:center;padding:0.7rem 0;">
-        <span style="font-weight:600;color:#4a6a4a;">Nasledujúca kontrola do</span>
+        <span style="font-weight:600;color:#4a5f7a;">Nasledujúca kontrola do</span>
         <span style="font-size:1.1rem;font-weight:700;">{{ vysledky.nasledujuca_kontrola or '—' }}</span>
     </div>
 </div>
@@ -112,14 +112,14 @@
 <div class="card">
     <div class="section-title">Výsledky výpočtu</div>
     {% for k, v in vysledky.items() %}
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:0.7rem 0;border-bottom:1px solid #e8f4ec;">
-        <span style="font-weight:600;color:#4a6a4a;">{{ k.replace('_', ' ').capitalize() }}</span>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:0.7rem 0;border-bottom:1px solid #e8f0f7;">
+        <span style="font-weight:600;color:#4a5f7a;">{{ k.replace('_', ' ').capitalize() }}</span>
         <span style="font-size:1.1rem;font-weight:700;color:
             {% if k == 'trieda' %}
-                {% if v in ['A0', 'A1'] %}#2c7a4b{% elif v == 'B' %}#4caf50{% elif v == 'C' %}#8bc34a{% elif v == 'D' %}#ffc107{% elif v == 'E' %}#ff9800{% else %}#f44336{% endif %}
+                {% if v in ['A0', 'A1'] %}#2c5f8a{% elif v == 'B' %}#4caf50{% elif v == 'C' %}#8bc34a{% elif v == 'D' %}#ffc107{% elif v == 'E' %}#ff9800{% else %}#f44336{% endif %}
             {% elif k == 'stav' %}
-                {% if v == 'Vyhovujúci' %}#2c7a4b{% else %}#f44336{% endif %}
-            {% else %}#1a3a2a{% endif %}
+                {% if v == 'Vyhovujúci' %}#2c5f8a{% else %}#f44336{% endif %}
+            {% else %}#1a2e4a{% endif %}
         ">{{ v }}</span>
     </div>
     {% endfor %}
@@ -128,7 +128,7 @@
 
 <div class="card">
     <div class="section-title">Stiahnuť správu</div>
-    <p style="color:#7a9a7a;font-size:0.9rem;margin-bottom:1.5rem;">Správa bola uložená do histórie. Stiahnite ju vo formáte Word alebo PDF.</p>
+    <p style="color:#7a90a8;font-size:0.9rem;margin-bottom:1.5rem;">Správa bola uložená do histórie. Stiahnite ju vo formáte Word alebo PDF.</p>
 
     <form method="POST" action="{{ url_for('stiahnut', format='word', typ=typ) }}" style="display:inline;">
         {% for k, v in data.items() %}

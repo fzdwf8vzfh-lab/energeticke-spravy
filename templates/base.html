@@ -6,10 +6,10 @@
     <title>{% block title %}Energetické správy{% endblock %}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f4; color: #1a2e1a; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f6f8; color: #1a1e2e; }
 
         nav {
-            background: #1a3a2a;
+            background: #1a2e4a;
             padding: 0 2rem;
             display: flex;
             align-items: center;
@@ -19,14 +19,14 @@
         nav .logo { color: #fff; font-weight: 700; font-size: 1.1rem; text-decoration: none; }
         nav .nav-links { display: flex; gap: 1rem; }
         nav .nav-links a {
-            color: #a8d5b5;
+            color: #a8c5e0;
             text-decoration: none;
             font-size: 0.9rem;
             padding: 0.4rem 0.8rem;
             border-radius: 6px;
             transition: background 0.2s;
         }
-        nav .nav-links a:hover { background: #2c5a3a; color: #fff; }
+        nav .nav-links a:hover { background: #2c4a6a; color: #fff; }
 
         .container { max-width: 900px; margin: 2rem auto; padding: 0 1.5rem; }
 
@@ -38,21 +38,21 @@
             margin-bottom: 1.5rem;
         }
 
-        h1 { font-size: 1.6rem; color: #1a3a2a; margin-bottom: 1.5rem; }
-        h2 { font-size: 1.2rem; color: #2c5a3a; margin-bottom: 1rem; }
+        h1 { font-size: 1.6rem; color: #1a2e4a; margin-bottom: 1.5rem; }
+        h2 { font-size: 1.2rem; color: #2c4a6a; margin-bottom: 1rem; }
 
         .form-group { margin-bottom: 1.2rem; }
-        label { display: block; font-size: 0.85rem; font-weight: 600; color: #4a6a4a; margin-bottom: 0.4rem; }
+        label { display: block; font-size: 0.85rem; font-weight: 600; color: #4a5f7a; margin-bottom: 0.4rem; }
         input, select, textarea {
             width: 100%;
             padding: 0.7rem 1rem;
-            border: 1.5px solid #c8e0c8;
+            border: 1.5px solid #c8d8ec;
             border-radius: 8px;
             font-size: 0.95rem;
             transition: border 0.2s;
-            background: #f9fcf9;
+            background: #f9fbfc;
         }
-        input:focus, select:focus { outline: none; border-color: #2c7a4b; background: #fff; }
+        input:focus, select:focus { outline: none; border-color: #2c5f8a; background: #fff; }
 
         .btn {
             padding: 0.7rem 1.8rem;
@@ -65,12 +65,12 @@
             text-decoration: none;
             display: inline-block;
         }
-        .btn-primary { background: #2c7a4b; color: #fff; }
-        .btn-primary:hover { background: #1a5c35; }
-        .btn-secondary { background: #e8f4ec; color: #2c7a4b; }
-        .btn-secondary:hover { background: #d0ebd9; }
-        .btn-outline { background: transparent; color: #2c7a4b; border: 1.5px solid #2c7a4b; }
-        .btn-outline:hover { background: #2c7a4b; color: #fff; }
+        .btn-primary { background: #2c5f8a; color: #fff; }
+        .btn-primary:hover { background: #1a4868; }
+        .btn-secondary { background: #e8f0f7; color: #2c5f8a; }
+        .btn-secondary:hover { background: #d0e0f0; }
+        .btn-outline { background: transparent; color: #2c5f8a; border: 1.5px solid #2c5f8a; }
+        .btn-outline:hover { background: #2c5f8a; color: #fff; }
 
         .alert { padding: 0.8rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; }
         .alert-error { background: #fde8e8; color: #c0392b; border: 1px solid #f5c6cb; }
@@ -83,16 +83,16 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.08em;
-            color: #2c7a4b;
+            color: #2c5f8a;
             margin: 1.5rem 0 0.8rem;
             padding-bottom: 0.4rem;
-            border-bottom: 2px solid #e8f4ec;
+            border-bottom: 2px solid #e8f0f7;
         }
 
         table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-        th { background: #1a3a2a; color: #fff; padding: 0.7rem 1rem; text-align: left; }
-        td { padding: 0.7rem 1rem; border-bottom: 1px solid #e8f4ec; }
-        tr:hover td { background: #f4faf6; }
+        th { background: #1a2e4a; color: #fff; padding: 0.7rem 1rem; text-align: left; }
+        td { padding: 0.7rem 1rem; border-bottom: 1px solid #e8f0f7; }
+        tr:hover td { background: #f4f8fb; }
 
         .badge {
             padding: 0.2rem 0.6rem;
