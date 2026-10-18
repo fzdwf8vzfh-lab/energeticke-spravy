@@ -71,6 +71,7 @@
     </div>
 
     <div class="card">
+        <div class="section-title">1. Kontrola kotla</div>
         <div class="section-title">1.1 Identifikačné údaje kotla — spoločné pre kotolňu</div>
         <div class="grid-3">
             <div class="form-group">
@@ -190,18 +191,9 @@
                 <input type="number" name="{{ k }}_min_prikon" step="0.1" min="0">
             </div>
         </div>
-        <div class="grid-2">
-            <div class="form-group">
-                <label>Označenie CE</label>
-                <input type="text" name="{{ k }}_oznacenie_ce" placeholder="napr. CE-0085 11">
-            </div>
-            <div class="form-group">
-                <label>Overenie výkonu kotla (min–max, m³/hod)</label>
-                <div style="display:flex;gap:0.5rem;">
-                    <input type="number" name="{{ k }}_overenie_min" step="0.01" placeholder="min">
-                    <input type="number" name="{{ k }}_overenie_max" step="0.01" placeholder="max">
-                </div>
-            </div>
+        <div class="form-group">
+            <label>Označenie CE</label>
+            <input type="text" name="{{ k }}_oznacenie_ce" placeholder="napr. CE-0085 11">
         </div>
         <details>
             <summary style="cursor:pointer;font-size:0.85rem;color:#4a5f7a;margin:0.5rem 0;">Horák (ak je kotol vybavený horákom dodatočne — nepovinné)</summary>
@@ -224,58 +216,6 @@
                 </div>
             </div>
         </details>
-
-        <div class="section-title" style="margin-top:1rem;">4. Meranie účinnosti kotla {{ k|upper }} — komínová strata</div>
-        <p style="font-size:0.82rem;color:#7a90a8;margin-top:-0.5rem;margin-bottom:0.8rem;">Zadajte meranie pri 50 % a pri 100 % zaťažení (rovnako ako protokol analyzátora spalín).</p>
-        {% for bod, popis in [('50', '50 % zaťaženia'), ('100', '100 % zaťaženia')] %}
-        <div style="font-weight:600;color:#4a5f7a;font-size:0.85rem;margin:0.5rem 0;">{{ popis }}</div>
-        <div class="grid-3">
-            <div class="form-group">
-                <label>Teplota spaľovacieho vzduchu (°C)</label>
-                <input type="number" name="{{ k }}_t_vzduch_{{ bod }}" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Teplota spalín (°C)</label>
-                <input type="number" name="{{ k }}_t_spalin_{{ bod }}" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Obsah O₂ (%)</label>
-                <input type="number" name="{{ k }}_o2_{{ bod }}" step="0.1" min="0" max="20.9">
-            </div>
-        </div>
-        <div class="grid-3">
-            <div class="form-group">
-                <label>Obsah CO (ppm)</label>
-                <input type="number" name="{{ k }}_co_{{ bod }}" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Obsah CO₂ (%)</label>
-                <input type="number" name="{{ k }}_co2_{{ bod }}" step="0.01">
-            </div>
-            <div class="form-group">
-                <label>Strata sálaním (%)</label>
-                <input type="number" name="{{ k }}_strata_salanim_{{ bod }}" step="0.01" value="0.8">
-            </div>
-        </div>
-        <div class="grid-3">
-            <div class="form-group">
-                <label>Obsah SO₂ (ppm)</label>
-                <input type="number" name="{{ k }}_so2_{{ bod }}" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Obsah NO (ppm)</label>
-                <input type="number" name="{{ k }}_no_{{ bod }}" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Obsah NO₂ (ppm)</label>
-                <input type="number" name="{{ k }}_no2_{{ bod }}" step="0.1">
-            </div>
-        </div>
-        {% endfor %}
-        <div class="form-group">
-            <label>Garantovaná účinnosť podľa výrobcu (%)</label>
-            <input type="number" name="{{ k }}_garantovana_ucinnost" step="0.01" placeholder="napr. 97.27">
-        </div>
     </div>
     {% endfor %}
 
@@ -350,6 +290,7 @@
     </div>
 
     <div class="card">
+        <div class="section-title">2. Vizuálna kontrola a zhodnotenie funkčnosti a údržby kotla</div>
         <div class="section-title">2.1 Prevádzková dokumentácia kotlov</div>
         <div class="grid-2">
             {% for name, label in [
@@ -432,6 +373,15 @@
             <label>Skúška funkcie kotlov v prevádzke</label>
             <input type="text" name="funkcnost_skuska" placeholder="napr. Pri kontrole boli kotly funkčné, riadené automatikou kotla">
         </div>
+        {% for k in ['k1', 'k2'] %}
+        <div class="form-group">
+            <label>Overenie výkonu kotla {{ k|upper }} (min–max, m³/hod)</label>
+            <div style="display:flex;gap:0.5rem;">
+                <input type="number" name="{{ k }}_overenie_min" step="0.01" placeholder="min">
+                <input type="number" name="{{ k }}_overenie_max" step="0.01" placeholder="max">
+            </div>
+        </div>
+        {% endfor %}
         <div class="form-group">
             <label>Regulácia výkonu</label>
             <input type="text" name="regulacia_vykonu_text" placeholder="napr. Regulácia výkonu je riadená automaticky, systémom MaR">
@@ -439,6 +389,7 @@
     </div>
 
     <div class="card">
+        <div class="section-title">3. Rozšírená kontrola vykurovacieho systému</div>
         <div class="section-title">3.1 Dokumentácia vnútorných rozvodov tepla a TÚV</div>
         <div class="grid-2">
             {% for name, label in [
@@ -518,7 +469,8 @@
     </div>
 
     <div class="card">
-        <div class="section-title">Legislatívna požiadavka a analyzátor spalín</div>
+        <div class="section-title">4. Meranie účinnosti kotla — komínová strata</div>
+        <p style="font-size:0.82rem;color:#7a90a8;margin-top:-0.5rem;margin-bottom:0.8rem;">Účinnosť kontrolovaného kotla sa zisťuje nepriamou metódou z analýzy spalín.</p>
         <div class="grid-3">
             <div class="form-group">
                 <label>Minimálna požadovaná účinnosť podľa Vyhl. č. 328/2005 Z.z. (%)</label>
@@ -534,6 +486,62 @@
             </div>
         </div>
     </div>
+
+    {% for k in ['k1', 'k2'] %}
+    <div class="card">
+        <div class="section-title">4. Meranie účinnosti kotla {{ k|upper }}</div>
+        <p style="font-size:0.82rem;color:#7a90a8;margin-top:-0.5rem;margin-bottom:0.8rem;">Zadajte meranie pri 50 % a pri 100 % zaťažení (rovnako ako protokol analyzátora spalín).</p>
+        {% for bod, popis in [('50', '50 % zaťaženia'), ('100', '100 % zaťaženia')] %}
+        <div style="font-weight:600;color:#4a5f7a;font-size:0.85rem;margin:0.5rem 0;">{{ popis }}</div>
+        <div class="grid-3">
+            <div class="form-group">
+                <label>Teplota spaľovacieho vzduchu (°C)</label>
+                <input type="number" name="{{ k }}_t_vzduch_{{ bod }}" step="0.1">
+            </div>
+            <div class="form-group">
+                <label>Teplota spalín (°C)</label>
+                <input type="number" name="{{ k }}_t_spalin_{{ bod }}" step="0.1">
+            </div>
+            <div class="form-group">
+                <label>Obsah O₂ (%)</label>
+                <input type="number" name="{{ k }}_o2_{{ bod }}" step="0.1" min="0" max="20.9">
+            </div>
+        </div>
+        <div class="grid-3">
+            <div class="form-group">
+                <label>Obsah CO (ppm)</label>
+                <input type="number" name="{{ k }}_co_{{ bod }}" step="0.1">
+            </div>
+            <div class="form-group">
+                <label>Obsah CO₂ (%)</label>
+                <input type="number" name="{{ k }}_co2_{{ bod }}" step="0.01">
+            </div>
+            <div class="form-group">
+                <label>Strata sálaním (%)</label>
+                <input type="number" name="{{ k }}_strata_salanim_{{ bod }}" step="0.01" value="0.8">
+            </div>
+        </div>
+        <div class="grid-3">
+            <div class="form-group">
+                <label>Obsah SO₂ (ppm)</label>
+                <input type="number" name="{{ k }}_so2_{{ bod }}" step="0.1">
+            </div>
+            <div class="form-group">
+                <label>Obsah NO (ppm)</label>
+                <input type="number" name="{{ k }}_no_{{ bod }}" step="0.1">
+            </div>
+            <div class="form-group">
+                <label>Obsah NO₂ (ppm)</label>
+                <input type="number" name="{{ k }}_no2_{{ bod }}" step="0.1">
+            </div>
+        </div>
+        {% endfor %}
+        <div class="form-group">
+            <label>Garantovaná účinnosť podľa výrobcu (%)</label>
+            <input type="number" name="{{ k }}_garantovana_ucinnost" step="0.01" placeholder="napr. 97.27">
+        </div>
+    </div>
+    {% endfor %}
 
     <div class="card">
         <div class="section-title">5. Vyhodnotenie účinnosti výroby tepla priamou metódou a 6. posúdenie výkonu</div>
