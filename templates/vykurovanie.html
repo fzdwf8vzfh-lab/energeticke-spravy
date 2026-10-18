@@ -32,26 +32,62 @@
     padding-bottom: 0;
 }
 .doc-page .section-title:first-child { margin-top: 0; }
-.doc-page label { font-family: inherit; font-weight: 700; color: #1a1a1a; font-size: 0.88rem; }
+
+.doc-page .grid-2, .doc-page .grid-3 { display: block; }
+
+.doc-page .form-group {
+    display: flex;
+    align-items: stretch;
+    margin-bottom: 0;
+    border-bottom: 1px solid #c3ddc9;
+}
+.doc-page label {
+    font-family: inherit;
+    font-weight: 700;
+    color: #1a1a1a;
+    font-size: 0.85rem;
+    background: #E8F4EC;
+    flex: 0 0 42%;
+    display: flex;
+    align-items: center;
+    margin: 0;
+    padding: 0.55rem 0.9rem;
+    border-right: 1px solid #c3ddc9;
+}
+.doc-page .form-group > input,
+.doc-page .form-group > select,
+.doc-page .form-group > textarea,
+.doc-page .form-group > div {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.doc-page .form-group > div { display: flex; }
+.doc-page .form-group > div input { flex: 1; width: auto; }
 .doc-page input, .doc-page select, .doc-page textarea {
     font-family: inherit;
-    background: transparent;
+    background: #fff;
     border: none;
-    border-bottom: 1px solid #999;
     border-radius: 0;
-    padding: 0.3rem 0.1rem;
-    font-size: 0.95rem;
+    padding: 0.55rem 0.9rem;
+    font-size: 0.92rem;
     color: #1a1a1a;
+    width: 100%;
+    min-width: 0;
 }
 .doc-page input:focus, .doc-page select:focus, .doc-page textarea:focus {
-    border-bottom: 1.5px solid #1a1a1a;
-    background: #fafafa;
+    background: #fafdf9;
+    outline: 1.5px solid #8fbf9f;
+    outline-offset: -1.5px;
 }
 .doc-page input[type="file"] {
-    border: 1px solid #c8d8ec;
-    border-radius: 6px;
-    padding: 0.4rem;
-    background: #fafafa;
+    border: none;
+    border-radius: 0;
+    padding: 0.5rem 0.9rem;
+    background: #fff;
+}
+@media (max-width: 600px) {
+    .doc-page .form-group { flex-direction: column; }
+    .doc-page label { flex-basis: auto; border-right: none; border-bottom: 1px solid #c3ddc9; }
 }
 .doc-page [style*="color:#1a2e4a"],
 .doc-page [style*="color:#4a5f7a"] {
@@ -698,7 +734,7 @@
         </div>
         <div class="form-group">
             <label>D/ Návrh opatrení</label>
-            <textarea name="navrh_opatreni" rows="3" style="width:100%;padding:0.7rem 1rem;border:1.5px solid #c8d8ec;border-radius:8px;font-size:0.95rem;font-family:inherit;" placeholder="napr. Zvážiť inštaláciu solárnych kolektorov, prehodnotiť využitie tepelného čerpadla..."></textarea>
+            <textarea name="navrh_opatreni" rows="3" placeholder="napr. Zvážiť inštaláciu solárnych kolektorov, prehodnotiť využitie tepelného čerpadla..."></textarea>
         </div>
 
         <div style="margin-top:1.5rem;display:flex;gap:1rem;">
