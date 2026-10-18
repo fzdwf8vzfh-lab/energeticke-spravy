@@ -120,10 +120,14 @@
         <div class="grid-2">
             <div class="form-group">
                 <label>Objekt *</label>
-                <input type="text" name="nazov_budovy" required placeholder="napr. Bytový dom">
+                <select name="nazov_budovy" required>
+                    <option value="Bytový dom">Bytový dom</option>
+                    <option value="Polyfunkčný dom">Polyfunkčný dom</option>
+                    <option value="Administratívna budova">Administratívna budova</option>
+                </select>
             </div>
             <div class="form-group">
-                <label>Majiteľ</label>
+                <label>Vlastník</label>
                 <input type="text" name="vlastnik" placeholder="Meno vlastníka">
             </div>
         </div>
@@ -150,7 +154,7 @@
         <div class="grid-2">
             <div class="form-group">
                 <label>Vypracoval</label>
-                <input type="text" name="vypracoval_firma" placeholder="napr. Termea, spol. s r. o.">
+                <input type="text" name="vypracoval_firma" value="Termea, spol. s r. o." readonly>
             </div>
             <div class="form-group">
                 <label>Adresa / kontakt vypracovateľa</label>
@@ -170,6 +174,7 @@
                 <label>Interval nasledujúcej kontroly (roky)</label>
                 <select name="interval_kontroly">
                     <option value="2">2 roky</option>
+                    <option value="3">3 roky</option>
                     <option value="4" selected>4 roky</option>
                     <option value="10">10 rokov</option>
                 </select>
@@ -197,9 +202,7 @@
                 <label>Druh paliva</label>
                 <select name="druh_paliva">
                     <option>Zemný plyn</option>
-                    <option>Vykurovací olej</option>
-                    <option>Tuhé palivo - čierne uhlie</option>
-                    <option>Tuhé palivo - drevo/biomasa</option>
+                    <option>Propán-bután</option>
                 </select>
             </div>
             <div class="form-group">
@@ -231,7 +234,10 @@
             </div>
             <div class="form-group">
                 <label>Spôsob využitia kotla</label>
-                <input type="text" name="sposob_vyuzitia" value="Ústredné vykurovanie a teplá voda">
+                <select name="sposob_vyuzitia">
+                    <option>Ústredné vykurovanie a teplá voda</option>
+                    <option>Ústredné vykurovanie</option>
+                </select>
             </div>
         </div>
     </div>
@@ -744,4 +750,20 @@
     </div>
 </form>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var druhPaliva = document.querySelector('select[name="druh_paliva"]');
+    var interval = document.querySelector('select[name="interval_kontroly"]');
+    if (!druhPaliva || !interval) return;
+    function aktualizujInterval() {
+        if (druhPaliva.value === 'Zemný plyn') {
+            interval.value = '4';
+        } else if (druhPaliva.value === 'Propán-bután') {
+            interval.value = '3';
+        }
+    }
+    druhPaliva.addEventListener('change', aktualizujInterval);
+    aktualizujInterval();
+});
+</script>
 {% endblock %}
