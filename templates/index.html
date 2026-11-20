@@ -28,6 +28,26 @@
         }
         .btn-hero:hover { background: #e8f0f7; }
 
+        .law-info {
+            max-width: 640px;
+            margin: 0 auto 2rem;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.25);
+            border-radius: 12px;
+            padding: 1.3rem 1.6rem;
+            text-align: left;
+        }
+        .law-info h3 {
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.7rem;
+            opacity: 0.9;
+        }
+        .law-info ul { margin: 0; padding-left: 1.1rem; font-size: 0.9rem; opacity: 0.92; line-height: 1.5; }
+        .law-info li { margin-bottom: 0.4rem; }
+        .law-info li:last-child { margin-bottom: 0; }
+
         .services {
             max-width: 900px;
             margin: 4rem auto;
@@ -65,6 +85,17 @@
 <header>
     <h1>Termea, spol. s r. o.</h1>
     <p>Kontrola vykurovacích systémov podľa zákona č. 314/2012 Z. z.</p>
+
+    <div class="law-info">
+        <h3>Čo hovorí zákon č. 314/2012 Z. z.?</h3>
+        <ul>
+            <li><strong>Koho sa týka:</strong> vlastníkov budov s vykurovacím systémom s výkonom nad 70 kW (resp. klimatizačným systémom nad 70 kW chladiaceho výkonu).</li>
+            <li><strong>Povinnosť:</strong> vlastník budovy musí na vlastné náklady zabezpečiť pravidelnú kontrolu systému a uchovávať správu z kontroly až do ďalšej kontroly.</li>
+            <li><strong>Predmet kontroly:</strong> zhodnotenie systému ako celku (kotly, rozvody tepla, riadenie) a návrh opatrení na zníženie spotreby energie.</li>
+            <li><strong>Prevod povinnosti:</strong> vlastník ju môže zmluvne preniesť na správcu budovy, spoločenstvo vlastníkov bytov alebo správcu vykurovacieho/klimatizačného systému.</li>
+        </ul>
+    </div>
+
     <a href="{{ url_for('login') }}" class="btn-hero">Prihlásiť sa →</a>
 </header>
 
