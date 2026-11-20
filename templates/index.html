@@ -41,12 +41,15 @@
             font-size: 0.95rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            margin-bottom: 0.7rem;
+            margin-bottom: 1rem;
             opacity: 0.9;
         }
+        .law-info h4 { font-size: 0.9rem; margin: 1rem 0 0.4rem; opacity: 0.95; }
+        .law-info h4:first-of-type { margin-top: 0; }
         .law-info ul { margin: 0; padding-left: 1.1rem; font-size: 0.9rem; opacity: 0.92; line-height: 1.5; }
         .law-info li { margin-bottom: 0.4rem; }
         .law-info li:last-child { margin-bottom: 0; }
+        .law-info .law-note { font-size: 0.8rem; opacity: 0.75; margin-top: 1rem; font-style: italic; }
 
         footer {
             text-align: center;
@@ -68,12 +71,31 @@
 
     <div class="law-info">
         <h3>Čo hovorí zákon č. 314/2012 Z. z.?</h3>
+
+        <h4>Na koho sa zákon vzťahuje</h4>
         <ul>
-            <li><strong>Koho sa týka:</strong> vlastníkov budov s vykurovacím systémom s výkonom nad 70 kW (resp. klimatizačným systémom nad 70 kW chladiaceho výkonu).</li>
-            <li><strong>Povinnosť:</strong> vlastník budovy musí na vlastné náklady zabezpečiť pravidelnú kontrolu systému a uchovávať správu z kontroly až do ďalšej kontroly.</li>
-            <li><strong>Predmet kontroly:</strong> zhodnotenie systému ako celku (kotly, rozvody tepla, riadenie) a návrh opatrení na zníženie spotreby energie.</li>
-            <li><strong>Prevod povinnosti:</strong> vlastník ju môže zmluvne preniesť na správcu budovy, spoločenstvo vlastníkov bytov alebo správcu vykurovacieho/klimatizačného systému.</li>
+            <li>Na vykurovací systém s celkovým účinným menovitým tepelným výkonom väčším ako 70 kW, ktorý je určený na vykurovanie vnútorných priestorov budovy.</li>
+            <li><strong>Zariadenie na výrobu tepla</strong> — časť vykurovacieho systému, ktorou sa vyrába teplo s využitím spaľovania palív, elektrického odporového vykurovania, alebo aerotermálnej, hydrotermálnej či geotermálnej energie prostredníctvom tepelného čerpadla.</li>
+            <li><strong>Vykurovací systém</strong> — teplovodný alebo teplovzdušný vykurovací systém (prípadne ich kombinácia), vrátane integrovaného riadenia vetrania budovy, pozostávajúci z prvkov potrebných na zvýšenie teploty vzduchu.</li>
         </ul>
+
+        <h4>Povinnosti vlastníka budovy</h4>
+        <ul>
+            <li>Zabezpečiť na vlastné náklady pravidelnú kontrolu vykurovacieho systému a klimatizačného systému.</li>
+            <li>Uchovávať správu z kontroly do prevzatia nasledujúcej správy z kontroly.</li>
+            <li>Pri prevode alebo prechode vlastníctva budovy odovzdať poslednú správu z kontroly novému vlastníkovi.</li>
+            <li>Pri prenájme budovy, vykurovacieho systému alebo klimatizačného systému odovzdať kópiu poslednej správy z kontroly nájomcovi.</li>
+        </ul>
+
+        <h4>Prevod povinnosti zmluvou na</h4>
+        <ul>
+            <li>spoločenstvo vlastníkov bytov a nebytových priestorov v dome,</li>
+            <li>správcu budovy,</li>
+            <li>správcu vykurovacieho systému, alebo</li>
+            <li>správcu klimatizačného systému.</li>
+        </ul>
+
+        <p class="law-note">Pravidelná kontrola sa nevykonáva pre prvky vykurovacieho alebo klimatizačného systému, ktorých pravidelná kontrola je súčasťou energetického auditu alebo overovania hospodárnosti podľa osobitného predpisu.</p>
     </div>
 
     <a href="{{ url_for('login') }}" class="btn-hero">Prihlásiť sa →</a>
