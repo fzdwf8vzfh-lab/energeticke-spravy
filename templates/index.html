@@ -48,35 +48,15 @@
         .law-info li { margin-bottom: 0.4rem; }
         .law-info li:last-child { margin-bottom: 0; }
 
-        .services {
-            max-width: 900px;
-            margin: 4rem auto;
-            padding: 0 1.5rem;
-        }
-        .services h2 { text-align: center; color: #1a2e4a; margin-bottom: 2rem; font-size: 1.5rem; }
-        .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
-        .card {
-            background: #fff;
-            border-radius: 12px;
-            padding: 2rem;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-            text-align: center;
-        }
-        .card .icon { font-size: 2.5rem; margin-bottom: 1rem; }
-        .card h3 { color: #1a2e4a; margin-bottom: 0.5rem; }
-        .card p { font-size: 0.9rem; color: #5a7090; }
-
         footer {
             text-align: center;
             padding: 2rem;
             color: #7a90a8;
             font-size: 0.85rem;
             border-top: 1px solid #e0e6ec;
-            margin-top: 4rem;
         }
 
         @media (max-width: 600px) {
-            .cards { grid-template-columns: 1fr; }
             header h1 { font-size: 1.8rem; }
         }
     </style>
@@ -98,27 +78,6 @@
 
     <a href="{{ url_for('login') }}" class="btn-hero">Prihlásiť sa →</a>
 </header>
-
-<div class="services">
-    <h2>Profesionálne nástroje pre energetické audity, certifikáty a kontrolu vykurovacích systémov</h2>
-    <div class="cards">
-        <div class="card">
-            <div class="icon">🔥</div>
-            <h3>Kontrola vykurovania</h3>
-            <p>Odborná kontrola kotlov a vykurovacích systémov s hodnotením stavu a odporúčaniami.</p>
-        </div>
-        <div class="card">
-            <div class="icon">🔍</div>
-            <h3>Energetický audit</h3>
-            <p>Komplexné posúdenie energetickej hospodárnosti budovy s výpočtom mernej spotreby energie.</p>
-        </div>
-        <div class="card">
-            <div class="icon">📋</div>
-            <h3>Energetický certifikát</h3>
-            <p>Vydávanie energetických certifikátov podľa platnej legislatívy SR.</p>
-        </div>
-    </div>
-</div>
 
 <footer>
     &copy; {{ 2025 }} Termea, spol. s r. o. Všetky práva vyhradené.
