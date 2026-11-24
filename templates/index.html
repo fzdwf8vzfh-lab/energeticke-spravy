@@ -15,6 +15,14 @@
             text-align: center;
         }
         header h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+        .logo-badge {
+            display: inline-block;
+            background: #fff;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+        .logo-badge img { height: 48px; width: auto; display: block; }
         header p { font-size: 1.1rem; opacity: 0.85; max-width: 600px; margin: 0 auto 2rem; }
         .btn-hero {
             padding: 0.9rem 2.5rem;
@@ -61,7 +69,9 @@
 </head>
 <body>
 <header>
-    <h1>Termea, spol. s r. o.</h1>
+    <div class="logo-badge">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Termea, spol. s r. o.">
+    </div>
     <p>Kontrola vykurovacích systémov podľa zákona č. 314/2012 Z. z.</p>
 
     <div class="law-info">
