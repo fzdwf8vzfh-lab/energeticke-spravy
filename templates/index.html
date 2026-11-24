@@ -15,20 +15,10 @@
             text-align: center;
             border-bottom: 1px solid #e0e6ec;
         }
-        .logo-badge { display: inline-block; margin-bottom: 1.5rem; }
+        .logo-badge { display: inline-block; margin-bottom: 1.5rem; transition: opacity 0.2s; }
+        .logo-badge:hover { opacity: 0.8; }
         .logo-badge img { height: 56px; width: auto; display: block; margin: 0 auto; }
         header p { font-size: 1.1rem; color: #4a5f7a; max-width: 600px; margin: 0 auto 2rem; }
-        .btn-hero {
-            padding: 0.9rem 2.5rem;
-            background: #2c5f8a;
-            color: #fff;
-            border-radius: 8px;
-            font-weight: 700;
-            text-decoration: none;
-            font-size: 1rem;
-            transition: all 0.2s;
-        }
-        .btn-hero:hover { background: #1a4868; }
 
         .law-info {
             max-width: 640px;
@@ -64,9 +54,9 @@
 </head>
 <body>
 <header>
-    <div class="logo-badge">
+    <a href="{{ url_for('login') }}" class="logo-badge">
         <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Termea, spol. s r. o.">
-    </div>
+    </a>
     <p>Kontrola vykurovacích systémov podľa zákona č. 314/2012 Z. z.</p>
 
     <div class="law-info">
@@ -102,8 +92,6 @@
             <li>správcu klimatizačného systému.</li>
         </ul>
     </div>
-
-    <a href="{{ url_for('login') }}" class="btn-hero">Prihlásiť sa →</a>
 </header>
 
 <footer>
