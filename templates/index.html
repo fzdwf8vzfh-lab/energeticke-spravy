@@ -9,48 +9,43 @@
         body { font-family: 'Segoe UI', sans-serif; background: #f4f6f8; color: #1a1e2e; }
 
         header {
-            background: linear-gradient(135deg, #1a2e4a 0%, #2c5f8a 100%);
-            color: #fff;
+            background: #fff;
+            color: #1a2e4a;
             padding: 5rem 2rem;
             text-align: center;
+            border-bottom: 1px solid #e0e6ec;
         }
-        header h1 { font-size: 2.5rem; margin-bottom: 1rem; }
-        .logo-badge {
-            display: inline-block;
-            background: #fff;
-            padding: 1rem 2rem;
-            border-radius: 12px;
-            margin-bottom: 1.5rem;
-        }
-        .logo-badge img { height: 48px; width: auto; display: block; }
-        header p { font-size: 1.1rem; opacity: 0.85; max-width: 600px; margin: 0 auto 2rem; }
+        .logo-badge { display: inline-block; margin-bottom: 1.5rem; }
+        .logo-badge img { height: 56px; width: auto; display: block; margin: 0 auto; }
+        header p { font-size: 1.1rem; color: #4a5f7a; max-width: 600px; margin: 0 auto 2rem; }
         .btn-hero {
             padding: 0.9rem 2.5rem;
-            background: #fff;
-            color: #2c5f8a;
+            background: #2c5f8a;
+            color: #fff;
             border-radius: 8px;
             font-weight: 700;
             text-decoration: none;
             font-size: 1rem;
             transition: all 0.2s;
         }
-        .btn-hero:hover { background: #e8f0f7; }
+        .btn-hero:hover { background: #1a4868; }
 
         .law-info {
             max-width: 640px;
             margin: 0 auto 2rem;
-            background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.25);
+            background: linear-gradient(135deg, #1a2e4a 0%, #2c5f8a 100%);
             border-radius: 12px;
             padding: 1.3rem 1.6rem;
             text-align: left;
+            color: #fff;
+            box-shadow: 0 8px 24px rgba(26,46,74,0.18);
         }
         .law-info h4 { font-size: 0.9rem; margin: 1rem 0 0.4rem; opacity: 0.95; }
         .law-info h4:first-of-type { margin-top: 0; }
         .law-info ul { margin: 0; padding-left: 1.1rem; font-size: 0.9rem; opacity: 0.92; line-height: 1.5; }
         .law-info li { margin-bottom: 0.4rem; }
         .law-info li:last-child { margin-bottom: 0; }
-        .law-info p { font-size: 0.9rem; opacity: 0.92; line-height: 1.5; margin: 0.6rem 0 0.4rem; }
+        .law-info p { color: #fff; font-size: 0.9rem; opacity: 0.92; line-height: 1.5; margin: 0.6rem 0 0.4rem; }
         .law-info ul.sub-list { margin: 0.4rem 0 0.4rem 1rem; }
         .law-info .law-note { font-size: 0.8rem; opacity: 0.75; margin-top: 1rem; font-style: italic; }
 
@@ -63,7 +58,7 @@
         }
 
         @media (max-width: 600px) {
-            header h1 { font-size: 1.8rem; }
+            .logo-badge img { height: 44px; }
         }
     </style>
 </head>
@@ -99,7 +94,7 @@
             <li>pri prenájme budovy, vykurovacieho systému alebo klimatizačného systému odovzdať kópiu poslednej správy z kontroly nájomcovi.</li>
         </ul>
 
-        <h4>(2) Vlastník budovy môže povinnosti podľa odseku 1 previesť zmluvou na</h4>
+        <h4>Vlastník budovy môže svoje povinnosti previesť zmluvou na</h4>
         <ul>
             <li>spoločenstvo vlastníkov bytov a nebytových priestorov v dome,</li>
             <li>správcu budovy,</li>
